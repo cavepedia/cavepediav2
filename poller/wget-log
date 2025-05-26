@@ -1,6 +1,0 @@
---2025-05-24 18:17:39--  https://s3.bigcavemaps.com:9000/arn:aws:s3:::cavepedia-v2/doorwarning.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256
-Resolving s3.bigcavemaps.com (s3.bigcavemaps.com)... 2606:d640:0:10::2, 104.167.221.74
-Connecting to s3.bigcavemaps.com (s3.bigcavemaps.com)|2606:d640:0:10::2|:9000... connected.
-HTTP request sent, awaiting response... 400 Bad Request
-2025-05-24 18:17:39 ERROR 400: Bad Request.
-
