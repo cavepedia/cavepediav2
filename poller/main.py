@@ -58,7 +58,7 @@ def get_presigned_url(bucket, key) -> str:
     url = client.presigned_get_object(bucket, unquote(key))
     return url
 
-def extract_data(bucket, key):
+def ocr(bucket, key):
     url = get_presigned_url(bucket, key)
 
     client = anthropic.Anthropic()
@@ -66,7 +66,6 @@ def extract_data(bucket, key):
         model='claude-sonnet-4-20250514',
         max_tokens=1000,
         temperature=1,
-        system='You are an OCR service. Extract all data from the provided document.',
         messages=[
             {
                 'role': 'user',
@@ -80,7 +79,7 @@ def extract_data(bucket, key):
                     },
                     {
                         'type': 'text',
-                        'text': 'Extract data from this document. Do not include any summary or conclusions of your own. Only include text from the document.'
+                        'text': 'Extract all text from this document. Do not include any summary or conclusions of your own.'
                     }
                 ]
             }
@@ -98,18 +97,17 @@ def process_events():
             print(f'PROCESSING event_time: {row["event_time"]}, bucket: {bucket}, key: {key}')
             print()
 
-            ai_ocr = extract_data(bucket, key)
+            ai_ocr = ocr(bucket, key)
             text = ai_ocr.content[0].text
             text = text.replace('\n',' ')
 
+            embedding=embed(text, 'search_document')
             with conn.cursor() as cur:
-                sql = 'INSERT INTO embeddings (bucket, key, content) VALUES (%s, %s, %s);'
-                cur.execute(sql, (bucket, key, text))
+                cur.execute('INSERT INTO embeddings (bucket, key, embedding) VALUES (%s, %s, %s::vector);', (bucket, key, embedding))
                 cur.execute('DELETE FROM events WHERE event_time = %s', (row['event_time'],))
             conn.commit()
 
 ### embeddings
-# https://github.com/pgvector/pgvector-python/blob/master/examples/cohere/example.py
 def embed(text, input_type):
     resp = co.embed(
         texts=[text],
@@ -119,18 +117,6 @@ def embed(text, input_type):
     )
     return resp.embeddings.float[0]
 
-def generate_embeddings():
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM embeddings WHERE embedding IS NULL')
-    rows = cur.fetchall()
-
-    for row in rows:
-        embedding=embed(row['content'], 'search_document')
-
-        conn.execute('UPDATE embeddings SET embedding = %s::vector WHERE bucket = %s AND key = %s', (embedding, row['bucket'], row['key']))
-        conn.commit()
-
 if __name__ == '__main__':
     create_tables()
     process_events()
-    generate_embeddings()

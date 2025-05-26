@@ -43,7 +43,6 @@ def search():
     for row in rows:
         print(row['bucket'])
         print(row['key'])
-        print(row['content'])
 
 if __name__ == '__main__':
     search()
