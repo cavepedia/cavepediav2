@@ -1,10 +1,12 @@
 from pgvector.psycopg import register_vector, Bit
 from psycopg.rows import dict_row
 from urllib.parse import unquote
+from pypdf import PdfReader, PdfWriter
 import anthropic
 import cohere
 import dotenv
 import datetime
+import io
 import json
 import minio
 import numpy as np
@@ -18,6 +20,12 @@ COHERE_API_KEY = os.getenv('COHERE_API_KEY')
 MINIO_ACCESS_KEY = os.getenv('MINIO_ACCESS_KEY')
 MINIO_SECRET_KEY = os.getenv('MINIO_SECRET_KEY')
 
+s3 = minio.Minio(
+    's3.bigcavemaps.com',
+    access_key=MINIO_ACCESS_KEY,
+    secret_key=MINIO_SECRET_KEY,
+    region='kansascity',
+)
 co = cohere.ClientV2(COHERE_API_KEY)
 conn = psycopg.connect(
     host='127.0.0.1',
@@ -32,6 +40,7 @@ conn = psycopg.connect(
 def create_tables():
     commands = (
         "CREATE EXTENSION IF NOT EXISTS vector",
+        "DROP TABLE IF EXISTS embeddings",
         """
         CREATE TABLE IF NOT EXISTS embeddings (
             bucket TEXT,
@@ -46,25 +55,53 @@ def create_tables():
     conn.commit()
     register_vector(conn)
 
+## splitting
+def split_pdfs():
+    rows = conn.execute('SELECT * FROM events')
+
+    for row in rows:
+        with conn.cursor() as cur:
+            for record in row['event_data']['Records']:
+                bucket = record['s3']['bucket']['name']
+                key = record['s3']['object']['key']
+                key = unquote(key)
+
+                print(f'SPLITTING bucket: {bucket}, key: {key}')
+
+                ##### get pdf #####
+                with s3.get_object(bucket, key) as obj:
+                    with open('/tmp/file.pdf', 'wb') as f:
+                        while True:
+                            chunk = obj.read(1024)
+                            if not chunk:
+                                break
+                            f.write(chunk)
+
+                ##### split #####
+                with open('/tmp/file.pdf', 'rb') as f:
+                    reader = PdfReader(f)
+
+                    for i in range(len(reader.pages)):
+                        writer = PdfWriter()
+                        writer.add_page(reader.pages[i])
+
+                        with io.BytesIO() as bs:
+                            writer.write(bs)
+                            bs.seek(0)
+                            s3.put_object('cavepedia-v2-pages', f'{key}/page-{i}.pdf', bs, len(bs.getvalue()))
+                        cur.execute('INSERT INTO embeddings (bucket, key) VALUES (%s, %s);', (f'{bucket}-pages', f'{key}/page-{i}.pdf'))
+
+            cur.execute('DELETE FROM events WHERE event_time = %s', (row['event_time'],))
+        conn.commit()
+
 ## processing
-def get_presigned_url(bucket, key) -> str:
-    client = minio.Minio(
-        's3.bigcavemaps.com',
-        access_key=MINIO_ACCESS_KEY,
-        secret_key=MINIO_SECRET_KEY,
-        region='kansascity',
-    )
-
-    url = client.presigned_get_object(bucket, unquote(key))
-    return url
-
 def ocr(bucket, key):
-    url = get_presigned_url(bucket, key)
+    url = s3.presigned_get_object(bucket, unquote(key))
 
     client = anthropic.Anthropic()
     message = client.messages.create(
         model='claude-sonnet-4-20250514',
-        max_tokens=1000,
+        max_tokens=4000,
         temperature=1,
         messages=[
             {
@@ -88,7 +125,7 @@ def ocr(bucket, key):
     return message
 
 def process_events():
-    rows = conn.execute('SELECT * FROM events')
+    rows = conn.execute('SELECT * FROM embeddings WHERE embedding IS NULL')
 
     for row in rows:
         for record in row['event_data']['Records']:
@@ -119,4 +156,5 @@ def embed(text, input_type):
 
 if __name__ == '__main__':
     create_tables()
-    process_events()
+    split_pdfs()
+#    process_events()
