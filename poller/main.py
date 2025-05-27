@@ -13,6 +13,17 @@ import numpy as np
 import os
 import psycopg
 import time
+import logging
+from pythonjsonlogger.json import JsonFormatter
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logHandler = logging.StreamHandler()
+formatter = JsonFormatter("{asctime}{message}", style="{")
+logHandler.setFormatter(formatter)
+logger.addHandler(logHandler)
+
+#####
 
 dotenv.load_dotenv('/home/paul/scripts-private/lech/cavepedia-v2/poller.env')
 
@@ -67,7 +78,7 @@ def split_pdfs():
                 key = record['s3']['object']['key']
                 key = unquote(key)
 
-                print(f'SPLITTING bucket: {bucket}, key: {key}')
+                logger.info(f'SPLITTING bucket: {bucket}, key: {key}')
 
                 ##### get pdf #####
                 with s3.get_object(bucket, key) as obj:
@@ -131,7 +142,7 @@ def process_events():
     for row in rows:
         bucket = row['bucket']
         key = row['key']
-        print(f'PROCESSING bucket: {bucket}, key: {key}')
+        logger.info(f'PROCESSING bucket: {bucket}, key: {key}')
 
         # tier 1 limit: 4k tokens/min
         # single pdf = 2-3k tokens
@@ -151,15 +162,15 @@ def process_events():
                 if e.type == 'overloaded_error':
                     if attempt < max_retries - 1:
                         sleep_time = retry_delay * (2 ** attempt)
-                        print(f"Overload error. Retrying in {sleep_time:.2f} seconds...")
+                        logger.info(f"Overload error. Retrying in {sleep_time:.2f} seconds...")
                         time.sleep(sleep_time)
                     else:
-                        print('Max retries reached.')
+                        logger.info('Max retries reached.')
                         raise
                 else:
                     raise
             except Exception as e:
-                print(f"An unexpected error occurred: {e}")
+                logger.error(f"An unexpected error occurred: {e}")
                 BACKOFF = True
                 break
 
@@ -173,6 +184,14 @@ def embed(text, input_type):
     )
     return resp.embeddings.float[0]
 
+def fix_pages():
+    i = 766
+    while i > 0:
+        conn.execute('UPDATE embeddings SET key = %s WHERE key = %s', (f'public/va/caves-of-virginia.pdf/page-{i}.pdf', f'public/va/caves-of-virginia.pdf/page-{i-1}.pdf'))
+        conn.commit()
+        i -= 1
+
+
 if __name__ == '__main__':
     create_tables()
     while True:
@@ -182,6 +201,6 @@ if __name__ == '__main__':
         process_events()
 
         if BACKOFF:
-            print('BACKOFF')
+            logger.info('BACKOFF')
             time.sleep(10 * 60)
         time.sleep(5 * 60)
