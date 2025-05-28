@@ -36,7 +36,7 @@ def embed(text, input_type):
     return resp.embeddings.float[0]
 
 def search():
-    query = 'tazwell county caves'
+    query = 'links trip with not more than 2 people'
     query_embedding = embed(query, 'search_query')
 
     rows = conn.execute('SELECT * FROM embeddings ORDER BY embedding <=> %s::vector LIMIT 5', (query_embedding,)).fetchall()
