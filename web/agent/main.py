@@ -8,7 +8,7 @@ from typing import Any, List
 from langchain.tools import tool
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Command
@@ -64,7 +64,7 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> Command[str]:
     """
 
     # 1. Define the model
-    model = ChatOpenAI(model="gpt-5-mini")
+    model = ChatAnthropic(model="claude-sonnet-4-5-20250929")
 
     # 2. Bind the tools to the model
     model_with_tools = model.bind_tools(

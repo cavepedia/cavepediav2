@@ -11,7 +11,7 @@ This is a starter template for building AI agents using [LangGraph](https://www.
   - npm
   - [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable)
   - [bun](https://bun.sh/)
-- OpenAI API Key (for the LangGraph agent)
+- Anthropic API Key (for the LangGraph agent)
 
 > **Note:** This repository ignores lock files (package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb) to avoid conflicts between different package managers. Each developer should generate their own lock file using their preferred package manager. After that, make sure to delete it from the .gitignore.
 
@@ -35,9 +35,9 @@ bun install
 > **Note:** Installing the package dependencies will also install the agent's python dependencies via the `install:agent` script.
 
 
-2. Set up your OpenAI API key:
+2. Set up your Anthropic API key:
 ```bash
-echo 'OPENAI_API_KEY=your-openai-api-key-here' > agent/.env
+echo 'ANTHROPIC_API_KEY=your-anthropic-api-key-here' > agent/.env
 ```
 
 3. Start the development server:
@@ -95,7 +95,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ### Agent Connection Issues
 If you see "I'm having trouble connecting to my tools", make sure:
 1. The LangGraph agent is running on port 8000
-2. Your OpenAI API key is set correctly
+2. Your Anthropic API key is set correctly
 3. Both servers started successfully
 
 ### Python Dependencies
