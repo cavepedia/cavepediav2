@@ -1,11 +1,16 @@
 "use client";
 
-import { useCopilotAction } from "@copilotkit/react-core";
+import { useCopilotAction, useUser as useCopilotUser } from "@copilotkit/react-core";
 import { CopilotKitCSSProperties, CopilotChat } from "@copilotkit/react-ui";
 import { useState } from "react";
+import { useUser } from "@auth0/nextjs-auth0/client";
+import LoginButton from "@/components/LoginButton";
+import LogoutButton from "@/components/LogoutButton";
+import Profile from "@/components/Profile";
 
 export default function CopilotKitPage() {
   const [themeColor, setThemeColor] = useState("#6366f1");
+  const { user, isLoading } = useUser();
 
   useCopilotAction({
     name: "setThemeColor",
@@ -19,20 +24,78 @@ export default function CopilotKitPage() {
     },
   });
 
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="app-container">
+        <div className="loading-state">
+          <div className="loading-text">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, show login page
+  if (!user) {
+    return (
+      <div className="app-container">
+        <div className="main-card-wrapper">
+          <img
+            src="https://cdn.auth0.com/quantum-assets/dist/latest/logos/auth0/auth0-lockup-en-ondark.png"
+            alt="Auth0 Logo"
+            className="auth0-logo"
+          />
+          <h1 className="main-title">Cavepedia</h1>
+
+          <div className="action-card">
+            <p className="action-text">
+              Welcome! Please log in to access the AI Cave Chat.
+            </p>
+            <LoginButton />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated, show the CopilotKit chat with user profile
   return (
     <main
       style={{ "--copilot-kit-primary-color": themeColor } as CopilotKitCSSProperties}
-      className="h-screen w-screen flex justify-center bg-gray-50 py-8 px-2"
+      className="h-screen w-screen flex flex-col bg-gray-50"
     >
-      <div className="h-full w-full max-w-5xl flex flex-col">
-        <CopilotChat
-          instructions={"You assist with looking up any relevant information to caving. This includes but is not limited to Cave Locations, Cave Surveying, Cave History."}
-          labels={{
-            title: "AI Cartwright",
-            initial: "Would you like to lookup a cave location today?",
-          }}
-          className="h-full w-full"
-        />
+      {/* Header with user profile and logout */}
+      <div className="w-full bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold text-gray-900">Cavepedia</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            {user.picture && (
+              <img
+                src={user.picture}
+                alt={user.name || 'User'}
+                className="w-8 h-8 rounded-full"
+              />
+            )}
+            <span className="text-sm text-gray-700">{user.name}</span>
+            <LogoutButton />
+          </div>
+        </div>
+      </div>
+
+      {/* CopilotKit Chat */}
+      <div className="flex-1 flex justify-center py-8 px-2 overflow-hidden">
+        <div className="h-full w-full max-w-5xl flex flex-col">
+          <CopilotChat
+            instructions={"You assist with looking up any relevant information to caving. This includes but is not limited to Cave Locations, Cave Surveying, Cave History."}
+            labels={{
+              title: "AI Cartwright",
+              initial: "Would you like to lookup a cave location today?",
+            }}
+            className="h-full w-full"
+          />
+        </div>
       </div>
     </main>
   );
