@@ -18,22 +18,12 @@ class AgentState(MessagesState):
     """
     Here we define the state of the agent
 
-    In this instance, we're inheriting from CopilotKitState, which will bring in
-    the CopilotKitState fields. We're also adding a custom field, `language`,
-    which will be used to set the language of the agent.
+    In this instance, we're inheriting from MessagesState, which will bring in
+    the messages field for conversation history.
     """
 
-    proverbs: List[str]
     tools: List[Any]
     # your_custom_agent_state: str = ""
-
-
-@tool
-def get_weather(location: str):
-    """
-    Get the weather for a given location.
-    """
-    return f"The weather for {location} is 70 degrees."
 
 
 # @tool
@@ -43,7 +33,6 @@ def get_weather(location: str):
 #     return "Your tool response here."
 
 backend_tools = [
-    get_weather
     # your_tool_here
 ]
 
@@ -81,7 +70,7 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> Command[str]:
 
     # 3. Define the system message by which the chat model will be run
     system_message = SystemMessage(
-        content=f"You are a helpful assistant. The current proverbs are {state.get('proverbs', [])}."
+        content="You are a helpful assistant."
     )
 
     # 4. Run the model to generate a response
