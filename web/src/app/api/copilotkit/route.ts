@@ -17,9 +17,11 @@ export const POST = async (req: NextRequest) => {
   // Get Auth0 session
   const session = await auth0.getSession();
 
-  // Extract access token and roles from session
-  const accessToken = session?.accessToken;
+  // Extract roles from session
   const userRoles = session?.user?.roles || [];
+
+  console.log("[copilotkit] session exists:", !!session);
+  console.log("[copilotkit] userRoles:", userRoles);
 
   // 2. Create the CopilotRuntime instance with Auth0 configuration
   const runtime = new CopilotRuntime({
@@ -28,9 +30,8 @@ export const POST = async (req: NextRequest) => {
         deploymentUrl: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8123",
         graphId: "sample_agent",
         langsmithApiKey: process.env.LANGSMITH_API_KEY || "",
-        langgraphConfig: {
-          configurable: {
-            auth0_access_token: accessToken,
+        assistantConfig: {
+          context: {
             auth0_user_roles: userRoles,
           }
         }

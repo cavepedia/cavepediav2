@@ -1,10 +1,11 @@
 from fastmcp import FastMCP
-from fastmcp.server.auth.providers.auth0 import Auth0Provider
+from fastmcp.server.dependencies import get_http_headers
 from psycopg.rows import dict_row
 import cohere
 import dotenv
 import psycopg
 import os
+import json
 
 dotenv.load_dotenv('/home/pew/scripts-private/loser/cavepedia-v2/poller.env')
 
@@ -20,18 +21,20 @@ conn = psycopg.connect(
     row_factory=dict_row,
 )
 
-
-# The Auth0Provider utilizes Auth0 OIDC configuration
-auth_provider = Auth0Provider(
-    config_url="https://dev-jao4so0av61ny4mr.us.auth0.com/.well-known/openid-configuration",
-    client_id="oONcxma5PNFwYLhrDC4o0PUuAmqDekzM",
-    client_secret="4Z7Wl12ALEtDmNAoERQe7lK2YD9x6jz7H25FiMxRp518dnag-IS2NLLScnmbe4-b",
-    audience="https://dev-jao4so0av61ny4mr.us.auth0.com/me/",
-    base_url="https://mcp.caving.dev",
-    # redirect_path="/auth/callback"                            # Default value, customize if needed
-)
-
 mcp = FastMCP("Cavepedia MCP")
+
+def get_user_roles() -> list[str]:
+    """Extract user roles from the X-User-Roles header."""
+    headers = get_http_headers()
+    print(f"[MCP] All headers: {dict(headers)}")
+    roles_header = headers.get("x-user-roles", "")
+    print(f"[MCP] X-User-Roles header: {roles_header}")
+    if roles_header:
+        try:
+            return json.loads(roles_header)
+        except json.JSONDecodeError:
+            return []
+    return []
 
 def embed(text, input_type):
     resp = co.embed(
@@ -54,25 +57,23 @@ def search(query) -> list[dict]:
 @mcp.tool
 def get_cave_location(cave: str, state: str, county: str) -> list[dict]:
     """Lookup cave location as coordinates. Returns up to 5 matches, ordered by most to least relevant."""
+    roles = get_user_roles()
+    print(f"get_cave_location called with roles: {roles}")
     return search(f'{cave} Location, latitude, Longitude. Located in {state} and {county} county.')
 
 @mcp.tool
 def general_caving_information(query: str) -> list[dict]:
-    """General purpose endpoint for any topic related to caves. Returns up to 5 mates, orderd by most to least relevant."""
+    """General purpose endpoint for any topic related to caves. Returns up to 5 matches, ordered by most to least relevant."""
+    roles = get_user_roles()
+    print(f"general_caving_information called with roles: {roles}")
     return search(query)
 
-# Add a protected tool to test authentication
 @mcp.tool
-async def get_token_info() -> dict:
-    """Returns information about the Auth0 token."""
-    from fastmcp.server.dependencies import get_access_token
-
-    token = get_access_token()
-
+def get_user_info() -> dict:
+    """Get information about the current user's roles."""
+    roles = get_user_roles()
     return {
-        "issuer": token.claims.get("iss"),
-        "audience": token.claims.get("aud"),
-        "scope": token.claims.get("scope")
+        "roles": roles,
     }
 
 if __name__ == "__main__":
