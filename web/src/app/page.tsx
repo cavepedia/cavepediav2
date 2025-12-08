@@ -78,7 +78,14 @@ export default function CopilotKitPage() {
                 className="w-8 h-8 rounded-full"
               />
             )}
-            <span className="text-sm text-gray-700">{user.name}</span>
+            <div className="flex flex-col items-end">
+              <span className="text-sm text-gray-700">{user.name}</span>
+              {(user as any).roles && (user as any).roles.length > 0 && (
+                <span className="text-xs text-gray-500">
+                  {(user as any).roles.join(', ')}
+                </span>
+              )}
+            </div>
             <LogoutButton />
           </div>
         </div>
