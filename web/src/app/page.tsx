@@ -95,10 +95,10 @@ export default function CopilotKitPage() {
       <div className="flex-1 flex justify-center py-8 px-2 overflow-hidden">
         <div className="h-full w-full max-w-5xl flex flex-col">
           <CopilotChat
-            instructions={"You assist with looking up any relevant information to caving. This includes but is not limited to Cave Locations, Cave Surveying, Cave History."}
+            instructions={"You are a knowledgeable caving assistant. Help users with all aspects of caving including cave exploration, safety, surveying techniques, cave locations, geology, equipment, history, conservation, and any other caving-related topics. Provide accurate, helpful, and safety-conscious information."}
             labels={{
               title: "AI Cartwright",
-              initial: "Would you like to lookup a cave location today?",
+              initial: "Hello! I'm here to help with anything related to caving. Ask me about caves, techniques, safety, equipment, or anything else caving-related!",
             }}
             className="h-full w-full"
           />
