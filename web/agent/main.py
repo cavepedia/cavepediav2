@@ -37,31 +37,41 @@ backend_tools = [
     # your_tool_here
 ]
 
-# Initialize MCP client
-mcp_client = MultiServerMCPClient(
-    {
-        "cavepedia": {
-            "transport": "streamable_http",
-            "url": "https://mcp.caving.dev/mcp",
-            "timeout": 10.0,
+def get_mcp_client(access_token: str = None):
+    """Create MCP client with optional authentication headers."""
+    headers = {}
+    if access_token:
+        headers["Authorization"] = f"Bearer {access_token}"
+
+    return MultiServerMCPClient(
+        {
+            "cavepedia": {
+                "transport": "streamable_http",
+                "url": "https://mcp.caving.dev/mcp",
+                "timeout": 10.0,
+                "headers": headers,
+            }
         }
-    }
-)
+    )
 
-# Global variable to hold loaded MCP tools
-_mcp_tools = None
+# Cache for MCP tools per access token
+_mcp_tools_cache = {}
 
-async def get_mcp_tools():
-    """Lazy load MCP tools on first access."""
-    global _mcp_tools
-    if _mcp_tools is None:
+async def get_mcp_tools(access_token: str = None):
+    """Lazy load MCP tools with authentication."""
+    cache_key = access_token or "default"
+
+    if cache_key not in _mcp_tools_cache:
         try:
-            _mcp_tools = await mcp_client.get_tools()
-            print(f"Loaded {len(_mcp_tools)} tools from MCP server")
+            mcp_client = get_mcp_client(access_token)
+            tools = await mcp_client.get_tools()
+            _mcp_tools_cache[cache_key] = tools
+            print(f"Loaded {len(tools)} tools from MCP server with auth: {bool(access_token)}")
         except Exception as e:
             print(f"Warning: Failed to load MCP tools: {e}")
-            _mcp_tools = []
-    return _mcp_tools
+            _mcp_tools_cache[cache_key] = []
+
+    return _mcp_tools_cache[cache_key]
 
 
 async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
@@ -76,11 +86,18 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
     https://www.perplexity.ai/search/react-agents-NcXLQhreS0WDzpVaS4m9Cg
     """
 
+    # 0. Extract Auth0 access token from config
+    configurable = config.get("configurable", {})
+    access_token = configurable.get("auth0_access_token")
+    user_roles = configurable.get("auth0_user_roles", [])
+
+    print(f"Chat node invoked with auth token: {bool(access_token)}, roles: {user_roles}")
+
     # 1. Define the model
     model = ChatAnthropic(model="claude-sonnet-4-5-20250929")
 
-    # 1.5 Load MCP tools from the cavepedia server
-    mcp_tools = await get_mcp_tools()
+    # 1.5 Load MCP tools from the cavepedia server with authentication
+    mcp_tools = await get_mcp_tools(access_token)
 
     # 2. Bind the tools to the model
     model_with_tools = model.bind_tools(
@@ -98,7 +115,7 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
 
     # 3. Define the system message by which the chat model will be run
     system_message = SystemMessage(
-        content="You are a helpful assistant with access to cave-related information through the Cavepedia MCP server. You can help users find information about caves, caving techniques, and related topics."
+        content=f"You are a helpful assistant with access to cave-related information through the Cavepedia MCP server. You can help users find information about caves, caving techniques, and related topics. User roles: {', '.join(user_roles) if user_roles else 'none'}"
     )
 
     # 4. Run the model to generate a response
@@ -114,17 +131,21 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
     return {"messages": [response]}
 
 
-async def tool_node_wrapper(state: AgentState) -> dict:
+async def tool_node_wrapper(state: AgentState, config: RunnableConfig) -> dict:
     """
     Custom tool node that handles both backend tools and MCP tools.
     """
-    # Load MCP tools and combine with backend tools
-    mcp_tools = await get_mcp_tools()
+    # Extract Auth0 access token from config
+    configurable = config.get("configurable", {})
+    access_token = configurable.get("auth0_access_token")
+
+    # Load MCP tools with authentication and combine with backend tools
+    mcp_tools = await get_mcp_tools(access_token)
     all_tools = [*backend_tools, *mcp_tools]
 
     # Use the standard ToolNode with all tools
     node = ToolNode(tools=all_tools)
-    result = await node.ainvoke(state)
+    result = await node.ainvoke(state, config)
 
     return result
 
