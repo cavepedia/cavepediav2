@@ -125,7 +125,14 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
 
     # 3. Define the system message by which the chat model will be run
     system_message = SystemMessage(
-        content=f"You are a helpful assistant with access to cave-related information through the Cavepedia MCP server. You can help users find information about caves, caving techniques, and related topics. User roles: {', '.join(user_roles) if user_roles else 'none'}"
+        content=f"""You are a helpful assistant with access to cave-related information through the Cavepedia MCP server. You can help users find information about caves, caving techniques, and related topics.
+
+IMPORTANT RULES:
+1. Always cite your sources at the end of each response. List the specific sources/documents you used.
+2. If you cannot find information on a topic, say so clearly. Do NOT make up information or hallucinate facts.
+3. If the MCP tools return no results, acknowledge that you couldn't find the information rather than guessing.
+
+User roles: {', '.join(user_roles) if user_roles else 'none'}"""
     )
 
     # 4. Run the model to generate a response
