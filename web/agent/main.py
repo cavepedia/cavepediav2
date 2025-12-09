@@ -15,7 +15,6 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.types import Command
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.interceptors import MCPToolCallRequest, MCPToolCallResult
-from copilotkit.langgraph import copilotkit_customize_config
 
 
 class AgentState(MessagesState):
@@ -27,7 +26,6 @@ class AgentState(MessagesState):
     """
 
     tools: List[Any]
-    # your_custom_agent_state: str = ""
 
 
 # @tool
@@ -130,19 +128,13 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
         content=f"You are a helpful assistant with access to cave-related information through the Cavepedia MCP server. You can help users find information about caves, caving techniques, and related topics. User roles: {', '.join(user_roles) if user_roles else 'none'}"
     )
 
-    # 3.5 Customize config for CopilotKit to properly handle message streaming
-    modified_config = copilotkit_customize_config(
-        config,
-        emit_messages=True,
-    )
-
     # 4. Run the model to generate a response
     response = await model_with_tools.ainvoke(
         [
             system_message,
             *state["messages"],
         ],
-        modified_config,
+        config,
     )
 
     # 5. Return the response in the messages

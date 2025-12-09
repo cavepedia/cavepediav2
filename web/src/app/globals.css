@@ -249,6 +249,11 @@ html {
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Hide CopilotKit's built-in loading indicator */
+.copilotKitActivityDot {
+  display: none !important;
+}
+
 @media (max-width: 600px) {
   .main-card-wrapper {
     padding: 2rem;

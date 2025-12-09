@@ -1,6 +1,6 @@
 "use client";
 
-import { useCopilotAction, useUser as useCopilotUser } from "@copilotkit/react-core";
+import { useCopilotAction, useCopilotChat } from "@copilotkit/react-core";
 import { CopilotKitCSSProperties, CopilotChat } from "@copilotkit/react-ui";
 import { useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
@@ -10,7 +10,8 @@ import Profile from "@/components/Profile";
 
 export default function CopilotKitPage() {
   const [themeColor, setThemeColor] = useState("#6366f1");
-  const { user, isLoading } = useUser();
+  const { user, isLoading: authLoading } = useUser();
+  const { isLoading: chatLoading } = useCopilotChat();
 
   useCopilotAction({
     name: "setThemeColor",
@@ -25,7 +26,7 @@ export default function CopilotKitPage() {
   });
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="app-container">
         <div className="loading-state">
@@ -92,7 +93,7 @@ export default function CopilotKitPage() {
       </div>
 
       {/* CopilotKit Chat */}
-      <div className="flex-1 flex justify-center py-8 px-2 overflow-hidden">
+      <div className="flex-1 flex justify-center py-8 px-2 overflow-hidden relative">
         <div className="h-full w-full max-w-5xl flex flex-col">
           <CopilotChat
             instructions={"You are a knowledgeable caving assistant. Help users with all aspects of caving including cave exploration, safety, surveying techniques, cave locations, geology, equipment, history, conservation, and any other caving-related topics. Provide accurate, helpful, and safety-conscious information. CRITICAL: Always cite sources at the end of each response."}
@@ -103,6 +104,17 @@ export default function CopilotKitPage() {
             className="h-full w-full"
           />
         </div>
+        {/* Loading overlay */}
+        {chatLoading && (
+          <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2 z-50">
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+            </div>
+            <span className="text-sm text-gray-600">Thinking...</span>
+          </div>
+        )}
       </div>
     </main>
   );
