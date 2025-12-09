@@ -9,12 +9,13 @@ import json
 from langchain.tools import tool
 from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import END, MessagesState, StateGraph, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.types import Command
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.interceptors import MCPToolCallRequest, MCPToolCallResult
+from copilotkit.langgraph import copilotkit_customize_config
 
 
 class AgentState(MessagesState):
@@ -110,7 +111,7 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
     print(f"Chat node invoked with roles: {user_roles}")
 
     # 1. Define the model
-    model = ChatAnthropic(model="claude-sonnet-4-5-20250929")
+    model = ChatGoogleGenerativeAI(model="gemini-3-pro-preview", max_output_tokens=65536)
 
     # 1.5 Load MCP tools from the cavepedia server with roles
     mcp_tools = await get_mcp_tools(user_roles)
@@ -121,17 +122,18 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
             *state.get("tools", []),  # bind tools defined by ag-ui
             *backend_tools,
             *mcp_tools,  # Add MCP tools from cavepedia server
-            # your_tool_here
         ],
-        # 2.1 Disable parallel tool calls to avoid race conditions,
-        #     enable this for faster performance if you want to manage
-        #     the complexity of running tool calls in parallel.
-        parallel_tool_calls=False,
     )
 
     # 3. Define the system message by which the chat model will be run
     system_message = SystemMessage(
         content=f"You are a helpful assistant with access to cave-related information through the Cavepedia MCP server. You can help users find information about caves, caving techniques, and related topics. User roles: {', '.join(user_roles) if user_roles else 'none'}"
+    )
+
+    # 3.5 Customize config for CopilotKit to properly handle message streaming
+    modified_config = copilotkit_customize_config(
+        config,
+        emit_messages=True,
     )
 
     # 4. Run the model to generate a response
@@ -140,7 +142,7 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
             system_message,
             *state["messages"],
         ],
-        config,
+        modified_config,
     )
 
     # 5. Return the response in the messages

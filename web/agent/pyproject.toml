@@ -12,8 +12,9 @@ dependencies = [
     "uvicorn>=0.29.0,<1.0.0",
     "python-dotenv>=1.0.0,<2.0.0",
     "langgraph-cli[inmem]>=0.4.7",
-    "langchain-anthropic>=0.3.3",
+    "langchain-google-genai>=2.1.0",
     "langchain-mcp-adapters>=0.1.0",
     "docstring-parser>=0.17.0",
     "jsonschema>=4.25.1",
+    "copilotkit>=0.1.0",
 ]

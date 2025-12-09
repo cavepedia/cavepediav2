@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={"antialiased"}>
         <Auth0Provider>
-          <CopilotKit runtimeUrl="/api/copilotkit" agent="sample_agent">
+          <CopilotKit runtimeUrl="/api/copilotkit" agent="sample_agent" properties={{ streamMode: ["events"] }}>
             {children}
           </CopilotKit>
         </Auth0Provider>
