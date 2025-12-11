@@ -69,8 +69,24 @@ def get_cave_location(cave: str, state: str, county: str) -> list[dict]:
 def general_caving_information(query: str) -> list[dict]:
     """General purpose endpoint for any topic related to caves. Returns up to 5 matches, ordered by most to least relevant."""
     roles = get_user_roles()
-    print(f"general_caving_information called with roles: {roles}")
     return search(query, roles)
+
+@mcp.tool
+def get_document_page(document: str, page: int) -> dict:
+    """Lookup a specific page of a document by its path and page number. Document should be the path like 'nss/compasstape/issue_20.pdf'."""
+    roles = get_user_roles()
+    if not roles:
+        return {"error": "No roles assigned"}
+
+    key = f"{document}/page-{page}.pdf"
+    row = conn.execute(
+        'SELECT key, content FROM embeddings WHERE key = %s AND role = ANY(%s)',
+        (key, roles)
+    ).fetchone()
+
+    if row:
+        return {"key": row["key"], "content": row["content"]}
+    return {"error": f"Page not found: {key}"}
 
 @mcp.tool
 def get_user_info() -> dict:
