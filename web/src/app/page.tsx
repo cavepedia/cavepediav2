@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
-import Profile from "@/components/Profile";
 
 // Separate component to safely use useCopilotChat hook
 function ThinkingIndicator() {

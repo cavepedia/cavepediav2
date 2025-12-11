@@ -34,7 +34,7 @@ export const POST = async (req: NextRequest) => {
           context: {
             auth0_user_roles: userRoles,
           }
-        }
+        } as any
       }),
     }
   });
