@@ -8,10 +8,29 @@ import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
 import Profile from "@/components/Profile";
 
+// Separate component to safely use useCopilotChat hook
+function ThinkingIndicator() {
+  try {
+    const { isLoading } = useCopilotChat();
+    if (!isLoading) return null;
+    return (
+      <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2 z-50">
+        <div className="flex gap-1">
+          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+        </div>
+        <span className="text-sm text-gray-600">Thinking...</span>
+      </div>
+    );
+  } catch {
+    return null;
+  }
+}
+
 export default function CopilotKitPage() {
   const [themeColor, setThemeColor] = useState("#6366f1");
   const { user, isLoading: authLoading } = useUser();
-  const { isLoading: chatLoading } = useCopilotChat();
 
   useCopilotAction({
     name: "setThemeColor",
@@ -104,17 +123,7 @@ export default function CopilotKitPage() {
             className="h-full w-full"
           />
         </div>
-        {/* Loading overlay */}
-        {chatLoading && (
-          <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2 z-50">
-            <div className="flex gap-1">
-              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-              <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-            </div>
-            <span className="text-sm text-gray-600">Thinking...</span>
-          </div>
-        )}
+        <ThinkingIndicator />
       </div>
     </main>
   );

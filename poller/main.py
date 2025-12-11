@@ -76,6 +76,7 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS embeddings (
             id SERIAL PRIMARY KEY,
+            role TEXT,
             bucket TEXT,
             key TEXT,
             content TEXT,
@@ -144,7 +145,7 @@ def split_files():
                             Key=f'{key}/page-{i + 1}.pdf',
                             Body=bs.getvalue()
                         )
-                    cur.execute('INSERT INTO embeddings (bucket, key) VALUES (%s, %s);', (BUCKET_PAGES, f'{key}/page-{i + 1}.pdf'))
+                    cur.execute('INSERT INTO embeddings (bucket, key, role) VALUES (%s, %s, %s);', (BUCKET_PAGES, f'{key}/page-{i + 1}.pdf', key.split('/')[0]))
             cur.execute('UPDATE metadata SET SPLIT = true WHERE id = %s', (row['id'],));
         conn.commit()
 
