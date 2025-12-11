@@ -106,8 +106,6 @@ async def chat_node(state: AgentState, config: RunnableConfig) -> dict:
     context = configurable.get("context", {})
     user_roles = context.get("auth0_user_roles", [])
 
-    print(f"Chat node invoked with roles: {user_roles}")
-
     # 1. Define the model
     model = ChatGoogleGenerativeAI(model="gemini-3-pro-preview", max_output_tokens=65536)
 
