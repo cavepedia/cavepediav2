@@ -7,7 +7,7 @@
     "dev:debug": "LOG_LEVEL=debug npm run dev",
     "dev:agent": "cd agent && npx @langchain/langgraph-cli dev --port 8123 --no-browser",
     "dev:ui": "next dev --turbopack -H 127.0.0.1",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start -H 127.0.0.1",
     "lint": "eslint .",
     "install:agent": "sh ./scripts/setup-agent.sh || scripts\\setup-agent.bat",
