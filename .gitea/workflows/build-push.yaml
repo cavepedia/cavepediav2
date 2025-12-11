@@ -28,5 +28,3 @@ jobs:
           context: ./web
           push: true
           tags: git.seaturtle.pw/cavepedia/cavepediav2-web:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
