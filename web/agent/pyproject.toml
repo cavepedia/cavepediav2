@@ -1,8 +1,8 @@
 [project]
 name = "vpi-1000"
-version = "0.1.0"
-description = "A LangGraph agent"
-requires-python = ">=3.12"
+version = "1.0.0"
+description = "VPI-1000"
+requires-python = ">=3.14"
 dependencies = [
     "langchain==1.1.0",
     "langgraph==1.0.4",

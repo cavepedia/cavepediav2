@@ -304,17 +304,6 @@ def embeddings_main():
         conn.execute('UPDATE embeddings SET embedding = %s::vector WHERE id = %s;', (embedding, row['id']))
         conn.commit()
 
-#        try:
-#            ai_ocr = ocr(bucket, key)
-#            text = ai_ocr.content[0].text
-#
-#            embedding=embed(text, 'search_document')
-#            conn.execute('UPDATE embeddings SET content = %s, embedding = %s::vector WHERE bucket = %s AND key = %s;', (text, embedding, bucket, key))
-#            conn.commit()
-#        except Exception as e:
-#            logger.error(f"An unexpected error occurred: {e}")
-#            return True
-
 ### embeddings
 def embed(text, input_type):
     max_retries = 3
