@@ -17,9 +17,9 @@ web/
 
 ## Prerequisites
 
-- Node.js 18+
-- Python 3.12+
-- [pnpm](https://pnpm.io/installation) (recommended) or npm/yarn/bun
+- Node.js 24+
+- Python 3.13
+- npm
 - Google AI API Key (for the LangGraph agent)
 
 ## Development
@@ -27,7 +27,7 @@ web/
 ### 1. Install dependencies
 
 ```bash
-pnpm install
+npm install
 ```
 
 This also installs the agent's Python dependencies via the `install:agent` script.
@@ -43,14 +43,14 @@ cp agent/.env.example agent/.env
 ### 3. Start development servers
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 This starts both the Next.js UI and LangGraph agent servers concurrently.
 
 ## Agent Deployment
 
-The agent is containerized for production deployment using the official LangGraph API server image.
+The agent is containerized for production deployment.
 
 ### Building the Docker image
 
