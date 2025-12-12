@@ -1,6 +1,7 @@
 # Cavepedia v2
 
-A RBAC managed cave information system with document processing, semantic search, and an AI chat interface. Email paul@bigcavemaps.com for access. Only about 60% vibe coded.
+* A RBAC managed cave information system with document processing, semantic search, and an AI chat interface. Email paul@bigcavemaps.com for access. Only about 60% vibe coded.
+* URL: https://chat.caving.dev
 
 ## Architecture
 
