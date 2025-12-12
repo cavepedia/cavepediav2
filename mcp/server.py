@@ -7,17 +7,26 @@ import psycopg
 import os
 import json
 
-dotenv.load_dotenv('/home/pew/scripts-private/loser/cavepedia-v2/poller.env')
+# Load .env file if it exists (for local dev)
+dotenv.load_dotenv()
 
-COHERE_API_KEY = os.getenv('COHERE_API_KEY')
+# Required environment variables
+COHERE_API_KEY = os.environ["COHERE_API_KEY"]
+
+# Database config
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_PORT = int(os.environ.get("DB_PORT", "5432"))
+DB_NAME = os.environ.get("DB_NAME", "cavepediav2_db")
+DB_USER = os.environ.get("DB_USER", "cavepediav2_user")
+DB_PASSWORD = os.environ["DB_PASSWORD"]
 
 co = cohere.ClientV2(COHERE_API_KEY)
 conn = psycopg.connect(
-    host='::1',
-    port=9030,
-    dbname='cavepediav2_db',
-    user='cavepediav2_user',
-    password='cavepediav2_pw',
+    host=DB_HOST,
+    port=DB_PORT,
+    dbname=DB_NAME,
+    user=DB_USER,
+    password=DB_PASSWORD,
     row_factory=dict_row,
 )
 
@@ -41,7 +50,8 @@ def embed(text, input_type):
         input_type=input_type,
         embedding_types=['float'],
     )
-    return resp.embeddings.float[0]
+    assert resp.embeddings.float_ is not None
+    return resp.embeddings.float_[0]
 
 def search(query, roles: list[str]) -> list[dict]:
     query_embedding = embed(query, 'search_query')

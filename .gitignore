@@ -1,0 +1,31 @@
+# Environment files
+.env
+.env.local
+.env*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Keys and certificates
+*.pem
+*.key
+*.crt
+
+# OS
+.DS_Store
+Thumbs.db
