@@ -27,26 +27,37 @@ logger.addHandler(logHandler)
 
 #####
 
-dotenv.load_dotenv('/home/pew/scripts-private/loser/cavepedia-v2/poller.env')
+# Load .env file if it exists (for local dev)
+dotenv.load_dotenv()
 
-COHERE_API_KEY = os.getenv('COHERE_API_KEY')
-S3_ACCESS_KEY = os.getenv('S3_ACCESS_KEY')
-S3_SECRET_KEY = os.getenv('S3_SECRET_KEY')
+# Required environment variables
+COHERE_API_KEY = os.environ['COHERE_API_KEY']
+S3_ACCESS_KEY = os.environ['S3_ACCESS_KEY']
+S3_SECRET_KEY = os.environ['S3_SECRET_KEY']
+S3_ENDPOINT = os.environ.get('S3_ENDPOINT', 'https://s3.bigcavemaps.com')
+S3_REGION = os.environ.get('S3_REGION', 'eu')
+
+# Database config
+DB_HOST = os.environ.get('DB_HOST', 'localhost')
+DB_PORT = int(os.environ.get('DB_PORT', '5432'))
+DB_NAME = os.environ.get('DB_NAME', 'cavepediav2_db')
+DB_USER = os.environ.get('DB_USER', 'cavepediav2_user')
+DB_PASSWORD = os.environ['DB_PASSWORD']
 
 s3 = boto3.client(
     's3',
     aws_access_key_id=S3_ACCESS_KEY,
     aws_secret_access_key=S3_SECRET_KEY,
-    endpoint_url='https://s3.bigcavemaps.com',
-    region_name='eu',
+    endpoint_url=S3_ENDPOINT,
+    region_name=S3_REGION,
 )
 co = cohere.ClientV2(api_key=COHERE_API_KEY)
 conn = psycopg.connect(
-    host='::1',
-    port=9030,
-    dbname='cavepediav2_db',
-    user='cavepediav2_user',
-    password='cavepediav2_pw',
+    host=DB_HOST,
+    port=DB_PORT,
+    dbname=DB_NAME,
+    user=DB_USER,
+    password=DB_PASSWORD,
     row_factory=dict_row,
 )
 
