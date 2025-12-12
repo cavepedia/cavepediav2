@@ -17,8 +17,10 @@ app = FastAPI(title="Cavepedia Agent")
 
 
 def build_agents(context):
-    """Build agents with auth context from frontend."""
+    """Build agents with auth context from properties."""
+    # Get user roles from frontend properties
     user_roles = context.get("properties", {}).get("auth0_user_roles", [])
+
     return [
         LangGraphAgent(
             name="vpi_1000",
