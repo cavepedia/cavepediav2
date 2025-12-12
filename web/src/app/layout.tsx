@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={"antialiased"}>
         <Auth0Provider>
-          <CopilotKit runtimeUrl="/api/copilotkit" agent="vpi_1000">
+          <CopilotKit runtimeUrl="/api/copilotkit">
             {children}
           </CopilotKit>
         </Auth0Provider>
