@@ -110,7 +110,7 @@ The agent image is automatically built and pushed to `git.seaturtle.pw/cavepedia
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `LANGGRAPH_DEPLOYMENT_URL` | Yes | `http://localhost:8123` | URL to the LangGraph agent |
+| `LANGGRAPH_DEPLOYMENT_URL` | Yes | `http://localhost:8000` | URL to the LangGraph agent |
 | `AUTH0_SECRET` | Yes | - | Session encryption key (`openssl rand -hex 32`) |
 | `AUTH0_DOMAIN` | Yes | - | Auth0 tenant domain |
 | `AUTH0_CLIENT_ID` | Yes | - | Auth0 application client ID |

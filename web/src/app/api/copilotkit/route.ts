@@ -2,9 +2,9 @@ import {
   CopilotRuntime,
   ExperimentalEmptyAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
+  LangGraphHttpAgent,
 } from "@copilotkit/runtime";
 
-import { LangGraphAgent } from "@ag-ui/langgraph"
 import { NextRequest } from "next/server";
 import { auth0 } from "@/lib/auth0";
 
@@ -23,18 +23,11 @@ export const POST = async (req: NextRequest) => {
   console.log("[copilotkit] session exists:", !!session);
   console.log("[copilotkit] userRoles:", userRoles);
 
-  // 2. Create the CopilotRuntime instance with Auth0 configuration
+  // 2. Create the CopilotRuntime instance with self-hosted agent
   const runtime = new CopilotRuntime({
     agents: {
-      "vpi_1000": new LangGraphAgent({
-        deploymentUrl: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8123",
-        graphId: "vpi_1000",
-        langsmithApiKey: process.env.LANGSMITH_API_KEY || "",
-        assistantConfig: {
-          context: {
-            auth0_user_roles: userRoles,
-          }
-        } as any
+      "vpi_1000": new LangGraphHttpAgent({
+        url: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8000",
       }),
     }
   });
