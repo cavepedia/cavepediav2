@@ -2,7 +2,6 @@ import {
   CopilotRuntime,
   ExperimentalEmptyAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
-  LangGraphHttpAgent,
 } from "@copilotkit/runtime";
 
 import { NextRequest } from "next/server";
@@ -23,13 +22,17 @@ export const POST = async (req: NextRequest) => {
   console.log("[copilotkit] session exists:", !!session);
   console.log("[copilotkit] userRoles:", userRoles);
 
-  // 2. Create the CopilotRuntime instance with self-hosted agent
+  // 2. Create the CopilotRuntime instance with remote endpoint
   const runtime = new CopilotRuntime({
-    agents: {
-      "vpi_1000": new LangGraphHttpAgent({
-        url: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8000",
-      }),
-    }
+    remoteEndpoints: [
+      {
+        url: `${process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8000"}/copilotkit`,
+      },
+    ],
+    // Pass auth context as properties to the remote endpoint
+    properties: {
+      auth0_user_roles: userRoles,
+    },
   });
 
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({

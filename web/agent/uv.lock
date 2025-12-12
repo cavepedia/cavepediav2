@@ -1006,7 +1006,6 @@ name = "vpi-1000"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "ag-ui-langgraph" },
     { name = "anthropic" },
     { name = "copilotkit" },
     { name = "docstring-parser" },
@@ -1023,7 +1022,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ag-ui-langgraph", specifier = ">=0.0.4" },
     { name = "anthropic", specifier = ">=0.40.0" },
     { name = "copilotkit", specifier = ">=0.1.0" },
     { name = "docstring-parser", specifier = ">=0.17.0" },

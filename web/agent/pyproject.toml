@@ -16,5 +16,4 @@ dependencies = [
     "docstring-parser>=0.17.0",
     "jsonschema>=4.25.1",
     "copilotkit>=0.1.0",
-    "ag-ui-langgraph>=0.0.4",
 ]
