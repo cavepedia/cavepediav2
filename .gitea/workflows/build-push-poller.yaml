@@ -8,8 +8,24 @@ on:
       - 'poller/**'
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Run lint
+        run: cd poller && make lint
+
   build:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -8,11 +8,29 @@ dependencies = [
     "anthropic>=0.52.0",
     "boto3>=1.42.4",
     "cohere>=5.15.0",
-    "mypy>=1.15.0",
     "pgvector>=0.4.1",
     "psycopg[binary]>=3.2.9",
     "pypdf>=5.5.0",
     "python-dotenv>=1.1.0",
     "python-json-logger>=3.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.15.0",
+    "ruff>=0.8.0",
     "types-psycopg2>=2.9.21.20250516",
 ]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+check_untyped_defs = true
+
