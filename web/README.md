@@ -61,12 +61,12 @@ docker build -t cavepediav2-agent .
 
 ### Running in production
 
-The agent requires PostgreSQL and Redis for persistence and pub/sub:
+The agent requires PostgreSQL and Valkey for persistence and pub/sub:
 
 ```bash
 docker run \
   -p 8123:8000 \
-  -e REDIS_URI="redis://redis:6379" \
+  -e REDIS_URI="redis://valkey:6379" \
   -e DATABASE_URI="postgres://user:pass@postgres:5432/langgraph" \
   -e GOOGLE_API_KEY="your-key" \
   -e LANGSMITH_API_KEY="your-key" \
@@ -77,8 +77,8 @@ Or use Docker Compose with the required services:
 
 ```yaml
 services:
-  redis:
-    image: redis:7
+  valkey:
+    image: valkey/valkey:9
 
   postgres:
     image: postgres:16
@@ -92,17 +92,70 @@ services:
     ports:
       - "8123:8000"
     environment:
-      REDIS_URI: redis://redis:6379
+      REDIS_URI: redis://valkey:6379
       DATABASE_URI: postgres://langgraph:langgraph@postgres:5432/langgraph
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
     depends_on:
-      - redis
+      - valkey
       - postgres
 ```
 
 ### CI/CD
 
 The agent image is automatically built and pushed to `git.seaturtle.pw/cavepedia/cavepediav2-agent:latest` on push to `main` via Gitea Actions.
+
+## Web Deployment
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `LANGGRAPH_DEPLOYMENT_URL` | Yes | `http://localhost:8123` | URL to the LangGraph agent |
+| `AUTH0_SECRET` | Yes | - | Session encryption key (`openssl rand -hex 32`) |
+| `AUTH0_DOMAIN` | Yes | - | Auth0 tenant domain |
+| `AUTH0_CLIENT_ID` | Yes | - | Auth0 application client ID |
+| `AUTH0_CLIENT_SECRET` | Yes | - | Auth0 application client secret |
+| `APP_BASE_URL` | Yes | - | Public URL of the app |
+| `LANGSMITH_API_KEY` | No | - | LangSmith API key for tracing |
+
+### Docker Compose (Full Stack)
+
+```yaml
+services:
+  web:
+    image: git.seaturtle.pw/cavepedia/cavepediav2-web:latest
+    ports:
+      - "3000:3000"
+    environment:
+      LANGGRAPH_DEPLOYMENT_URL: http://agent:8000
+      AUTH0_SECRET: ${AUTH0_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      APP_BASE_URL: ${APP_BASE_URL}
+    depends_on:
+      - agent
+
+  agent:
+    image: git.seaturtle.pw/cavepedia/cavepediav2-agent:latest
+    environment:
+      REDIS_URI: redis://valkey:6379
+      DATABASE_URI: postgres://langgraph:langgraph@postgres:5432/langgraph
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+    depends_on:
+      - valkey
+      - postgres
+
+  valkey:
+    image: valkey/valkey:9
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: langgraph
+      POSTGRES_USER: langgraph
+      POSTGRES_PASSWORD: langgraph
+```
 
 ## Available Scripts
 

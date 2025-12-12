@@ -26,9 +26,9 @@ export const POST = async (req: NextRequest) => {
   // 2. Create the CopilotRuntime instance with Auth0 configuration
   const runtime = new CopilotRuntime({
     agents: {
-      "sample_agent": new LangGraphAgent({
+      "vpi_1000": new LangGraphAgent({
         deploymentUrl: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8123",
-        graphId: "sample_agent",
+        graphId: "vpi_1000",
         langsmithApiKey: process.env.LANGSMITH_API_KEY || "",
         assistantConfig: {
           context: {
