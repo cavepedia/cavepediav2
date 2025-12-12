@@ -1,5 +1,6 @@
 {
   "python_version": "3.13",
+  "image_distro": "wolfi",
   "dependencies": ["."],
   "graphs": {
     "vpi_1000": "./main.py:graph"
