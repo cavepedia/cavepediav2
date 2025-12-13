@@ -35,32 +35,52 @@ def check_mcp_available(url: str, timeout: float = 5.0) -> bool:
         logger.warning(f"MCP server not reachable: {e}")
         return False
 
-# Try to configure MCP if server is available
-toolsets = []
-if check_mcp_available(CAVE_MCP_URL):
-    try:
-        from pydantic_ai.mcp import MCPServerStreamableHTTP
-        mcp_server = MCPServerStreamableHTTP(
-            url=CAVE_MCP_URL,
-            timeout=30.0,
-        )
-        toolsets.append(mcp_server)
-        logger.info(f"MCP server configured: {CAVE_MCP_URL}")
-    except Exception as e:
-        logger.warning(f"Could not configure MCP server: {e}")
-else:
-    logger.info("MCP server unavailable - running without MCP tools")
+# Check if MCP is available at startup
+MCP_AVAILABLE = check_mcp_available(CAVE_MCP_URL)
+logger.info(f"MCP server available: {MCP_AVAILABLE}")
 
-# Create the agent with Google Gemini model
-agent = Agent(
-    model=GoogleModel("gemini-3-pro-preview"),
-    toolsets=toolsets if toolsets else None,
-    instructions="""You are a helpful caving assistant. Help users with all aspects of caving including cave exploration, safety, surveying techniques, cave locations, geology, equipment, history, conservation, and any other caving-related topics.
+AGENT_INSTRUCTIONS = """You are a helpful caving assistant. Help users with all aspects of caving including cave exploration, safety, surveying techniques, cave locations, geology, equipment, history, conservation, and any other caving-related topics.
 
 IMPORTANT RULES:
 1. Always cite your sources at the end of each response when possible.
 2. If you're not certain about information, say so clearly. Do NOT make up information or hallucinate facts.
-3. Provide accurate, helpful, and safety-conscious information.""",
-)
+3. Provide accurate, helpful, and safety-conscious information."""
 
-logger.info(f"Agent initialized successfully (MCP: {'enabled' if toolsets else 'disabled'})")
+
+def create_agent(user_roles: list[str] | None = None):
+    """Create an agent with MCP tools configured for the given user roles."""
+    toolsets = []
+
+    if MCP_AVAILABLE and user_roles:
+        try:
+            import json
+            from pydantic_ai.mcp import MCPServerStreamableHTTP
+
+            roles_header = json.dumps(user_roles)
+            logger.info(f"Creating MCP server with roles: {roles_header}")
+
+            mcp_server = MCPServerStreamableHTTP(
+                url=CAVE_MCP_URL,
+                headers={"x-user-roles": roles_header},
+                timeout=30.0,
+            )
+            toolsets.append(mcp_server)
+            logger.info(f"MCP server configured with roles: {user_roles}")
+        except Exception as e:
+            logger.warning(f"Could not configure MCP server: {e}")
+    elif not user_roles:
+        logger.info("No user roles provided - MCP tools disabled")
+    else:
+        logger.info("MCP server unavailable - running without MCP tools")
+
+    return Agent(
+        model=GoogleModel("gemini-2.5-flash"),
+        toolsets=toolsets if toolsets else None,
+        instructions=AGENT_INSTRUCTIONS,
+    )
+
+
+# Create a default agent for health checks etc
+agent = create_agent()
+
+logger.info("Agent module initialized successfully")

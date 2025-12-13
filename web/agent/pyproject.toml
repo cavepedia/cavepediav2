@@ -5,9 +5,10 @@ description = "Cavepedia AI Agent with MCP tools"
 requires-python = ">=3.13"
 dependencies = [
     "uvicorn",
+    "starlette",
     "pydantic-ai",
-    "google-genai",
     "mcp",
+    "google-genai",
     "ag-ui-protocol",
     "python-dotenv",
     "httpx",

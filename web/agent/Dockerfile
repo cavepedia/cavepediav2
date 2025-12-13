@@ -25,4 +25,4 @@ EXPOSE 8000
 ENV PORT=8000
 ENV HOST="0.0.0.0"
 
-CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--frozen", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

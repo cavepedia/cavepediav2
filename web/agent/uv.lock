@@ -231,6 +231,7 @@ dependencies = [
     { name = "mcp" },
     { name = "pydantic-ai" },
     { name = "python-dotenv" },
+    { name = "starlette" },
     { name = "uvicorn" },
 ]
 
@@ -242,6 +243,7 @@ requires-dist = [
     { name = "mcp" },
     { name = "pydantic-ai" },
     { name = "python-dotenv" },
+    { name = "starlette" },
     { name = "uvicorn" },
 ]
 

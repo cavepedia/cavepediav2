@@ -25,4 +25,4 @@ EXPOSE 8021
 ENV PORT=8021
 ENV HOST="0.0.0.0"
 
-CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8021"]
+CMD ["uv", "run", "--frozen", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8021"]

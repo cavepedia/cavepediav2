@@ -4,6 +4,7 @@ Self-hosted PydanticAI agent server using AG-UI protocol.
 
 import os
 import sys
+import json
 import logging
 from dotenv import load_dotenv
 
@@ -24,13 +25,53 @@ if not os.getenv("GOOGLE_API_KEY"):
     sys.exit(1)
 
 import uvicorn
-from src.agent import agent
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import Response, JSONResponse
+from starlette.routing import Route
+
+from pydantic_ai.ui.ag_ui import AGUIAdapter
+
+from src.agent import create_agent
 
 logger.info("Creating AG-UI app...")
 
-# Convert PydanticAI agent to ASGI app with AG-UI protocol
-debug_mode = os.getenv("DEBUG", "").lower() in ("true", "1", "yes")
-app = agent.to_ag_ui(debug=debug_mode)
+
+async def handle_agent_request(request: Request) -> Response:
+    """Handle incoming AG-UI requests with dynamic role-based MCP configuration."""
+    # Debug: log all incoming headers
+    logger.info(f"DEBUG: All request headers: {dict(request.headers)}")
+
+    # Extract user roles from request headers
+    roles_header = request.headers.get("x-user-roles", "")
+    logger.info(f"DEBUG: x-user-roles header value: '{roles_header}'")
+    user_roles = []
+
+    if roles_header:
+        try:
+            user_roles = json.loads(roles_header)
+            logger.info(f"Request received with roles: {user_roles}")
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse x-user-roles header: {e}")
+
+    # Create agent with the user's roles
+    agent = create_agent(user_roles)
+
+    # Dispatch the request using AGUIAdapter
+    return await AGUIAdapter.dispatch_request(request, agent=agent)
+
+
+async def health(request: Request) -> Response:
+    """Health check endpoint."""
+    return JSONResponse({"status": "ok"})
+
+
+app = Starlette(
+    routes=[
+        Route("/", handle_agent_request, methods=["POST"]),
+        Route("/health", health, methods=["GET"]),
+    ],
+)
 
 logger.info("AG-UI app created successfully")
 
