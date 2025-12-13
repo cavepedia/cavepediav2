@@ -4,16 +4,19 @@ import {
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
 
+import { LangGraphAgent } from "@ag-ui/langgraph";
 import { NextRequest } from "next/server";
 
 const serviceAdapter = new ExperimentalEmptyAdapter();
 
 const runtime = new CopilotRuntime({
-  remoteEndpoints: [
-    {
-      url: `${process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8000"}/copilotkit`,
-    },
-  ],
+  agents: {
+    vpi_1000: new LangGraphAgent({
+      deploymentUrl: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8000",
+      graphId: "vpi_1000",
+      langsmithApiKey: process.env.LANGSMITH_API_KEY || "",
+    }),
+  },
 });
 
 export const POST = async (req: NextRequest) => {
