@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+agent/.venv
+
+# Build outputs
+.next
+out
+
+# Environment files
+.env*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Misc
+*.log
+*.md

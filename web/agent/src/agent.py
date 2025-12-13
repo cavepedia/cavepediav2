@@ -2,14 +2,19 @@
 PydanticAI agent with MCP tools from Cavepedia server.
 """
 
+import os
 import logging
 import httpx
 
 from pydantic_ai import Agent
 from pydantic_ai.models.google import GoogleModel
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+# Set up logging based on environment
+log_level = logging.DEBUG if os.getenv("DEBUG") else logging.INFO
+logging.basicConfig(
+    level=log_level,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 MCP_URL = "https://mcp.caving.dev/mcp"
