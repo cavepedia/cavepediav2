@@ -1,5 +1,5 @@
 {
-  "name": "langgraph-python-starter",
+  "name": "cavepedia-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@ag-ui/client": "^0.0.42",
-    "@ag-ui/langgraph": "0.0.18",
     "@auth0/nextjs-auth0": "^4.13.2",
     "@copilotkit/react-core": "1.50.0",
     "@copilotkit/react-ui": "1.50.0",
@@ -31,7 +30,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@langchain/langgraph-cli": "^1.0.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
