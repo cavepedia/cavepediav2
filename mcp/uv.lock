@@ -82,6 +82,7 @@ dependencies = [
     { name = "dotenv" },
     { name = "fastmcp" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
@@ -91,6 +92,7 @@ requires-dist = [
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "fastmcp", specifier = ">=2.13.3" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.2" },
+    { name = "uvicorn", specifier = ">=0.38.0" },
 ]
 
 [[package]]

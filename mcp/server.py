@@ -106,5 +106,14 @@ def get_user_info() -> dict:
         "roles": roles,
     }
 
+from starlette.responses import JSONResponse
+from starlette.routing import Route
+
+async def health(request):
+    return JSONResponse({"status": "ok"})
+
+app = mcp.http_app()
+app.routes.append(Route("/health", health))
+
 if __name__ == "__main__":
     mcp.run(transport='http', host='::1', port=9031)
