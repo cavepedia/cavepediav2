@@ -31,6 +31,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+.env
 .env*
 
 # vercel
@@ -40,5 +41,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# LangGraph API
-.langgraph_api
+.mastra/
+
+# lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# python
+venv
+.venv
+__pycache__

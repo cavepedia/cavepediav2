@@ -12,7 +12,7 @@ const serviceAdapter = new ExperimentalEmptyAdapter();
 const runtime = new CopilotRuntime({
   agents: {
     vpi_1000: new HttpAgent({
-      url: process.env.LANGGRAPH_DEPLOYMENT_URL || "http://localhost:8000",
+      url: process.env.AGENT_URL || "http://localhost:8000/",
     }),
   },
 });

@@ -1,119 +1,117 @@
-# Cavepedia Web
+# CopilotKit <> PydanticAI Starter
 
-Next.js frontend with integrated PydanticAI agent for Cavepedia.
-
-## Project Structure
-
-```
-web/
-├── src/              # Next.js application
-├── agent/            # PydanticAI agent (Python)
-│   ├── main.py       # Agent definition
-│   ├── server.py     # FastAPI server with AG-UI
-│   └── pyproject.toml
-└── ...
-```
+This is a starter template for building AI agents using [PydanticAI](https://ai.pydantic.dev/) and [CopilotKit](https://copilotkit.ai). It provides a modern Next.js application with an integrated investment analyst agent that can research stocks, analyze market data, and provide investment insights.
 
 ## Prerequisites
 
-- Node.js 24+
-- Python 3.13
-- npm
-- Google AI API Key (for the PydanticAI agent)
+- OpenAI API Key (for the PydanticAI agent)
+- Python 3.12+
+- uv
+- Node.js 20+ 
+- Any of the following package managers:
+  - pnpm (recommended)
+  - npm
+  - yarn
+  - bun
 
-## Development
+> **Note:** This repository ignores lock files (package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb) to avoid conflicts between different package managers. Each developer should generate their own lock file using their preferred package manager. After that, make sure to delete it from the .gitignore.
 
-### 1. Install dependencies
+## Getting Started
 
+1. Install dependencies using your preferred package manager:
 ```bash
+# Using pnpm (recommended)
+pnpm install
+
+# Using npm
 npm install
+
+# Using yarn
+yarn install
+
+# Using bun
+bun install
 ```
 
-This also installs the agent's Python dependencies via the `install:agent` script.
+> **Note:** This will automatically setup the Python environment as well.
+>
+> If you have manual isseus, you can run:
+>
+> ```sh
+> npm run install:agent
+> ```
 
-### 2. Set up environment variables
 
-```bash
-# Agent environment
-cp agent/.env.example agent/.env
-# Edit agent/.env with your API keys
+3. Set up your OpenAI API key:
+
+Create a `.env` file inside the `agent` folder with the following content:
+
+```
+OPENAI_API_KEY=sk-...your-openai-key-here...
 ```
 
-### 3. Start development servers
 
+4. Start the development server:
 ```bash
+# Using pnpm
+pnpm dev
+
+# Using npm
 npm run dev
+
+# Using yarn
+yarn dev
+
+# Using bun
+bun run dev
 ```
 
-This starts both the Next.js UI and PydanticAI agent servers concurrently.
-
-## Agent Deployment
-
-The agent can be containerized for production deployment.
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GOOGLE_API_KEY` | Yes | Google AI API key for Gemini |
-
-### Running in production
-
-```bash
-cd agent
-uv run uvicorn server:app --host 0.0.0.0 --port 8000
-```
-
-## Web Deployment
-
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `LANGGRAPH_DEPLOYMENT_URL` | Yes | `http://localhost:8000` | URL to the agent |
-| `AUTH0_SECRET` | Yes | - | Session encryption key (`openssl rand -hex 32`) |
-| `AUTH0_DOMAIN` | Yes | - | Auth0 tenant domain |
-| `AUTH0_CLIENT_ID` | Yes | - | Auth0 application client ID |
-| `AUTH0_CLIENT_SECRET` | Yes | - | Auth0 application client secret |
-| `APP_BASE_URL` | Yes | - | Public URL of the app |
-
-### Docker Compose (Full Stack)
-
-```yaml
-services:
-  web:
-    image: git.seaturtle.pw/cavepedia/cavepediav2-web:latest
-    ports:
-      - "3000:3000"
-    environment:
-      LANGGRAPH_DEPLOYMENT_URL: http://agent:8000
-      AUTH0_SECRET: ${AUTH0_SECRET}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
-      APP_BASE_URL: ${APP_BASE_URL}
-    depends_on:
-      - agent
-
-  agent:
-    image: git.seaturtle.pw/cavepedia/cavepediav2-agent:latest
-    environment:
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-```
+This will start both the UI and agent servers concurrently.
 
 ## Available Scripts
+The following scripts can also be run using your preferred package manager:
+- `dev` - Starts both UI and agent servers in development mode
+- `dev:debug` - Starts development servers with debug logging enabled
+- `dev:ui` - Starts only the Next.js UI server
+- `dev:agent` - Starts only the PydanticAI agent server
+- `build` - Builds the Next.js application for production
+- `start` - Starts the production server
+- `lint` - Runs ESLint for code linting
+- `install:agent` - Installs Python dependencies for the agent
 
-- `dev` - Start both UI and agent servers
-- `dev:ui` - Start only Next.js
-- `dev:agent` - Start only PydanticAI agent
-- `build` - Build Next.js for production
-- `start` - Start production server
-- `lint` - Run ESLint
-- `install:agent` - Install agent Python dependencies
+## Documentation
 
-## References
+The main UI component is in `src/app/page.tsx`. You can:
+- Modify the theme colors and styling
+- Add new frontend actions
+- Customize the CopilotKit sidebar appearance
 
-- [PydanticAI Documentation](https://ai.pydantic.dev/)
-- [CopilotKit Documentation](https://docs.copilotkit.ai)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Auth0 Next.js SDK Examples](https://github.com/auth0/nextjs-auth0/blob/main/EXAMPLES.md)
+## 📚 Documentation
+
+- [PydanticAI Documentation](https://ai.pydantic.dev) - Learn more about PydanticAI and its features
+- [CopilotKit Documentation](https://docs.copilotkit.ai) - Explore CopilotKit's capabilities
+- [Next.js Documentation](https://nextjs.org/docs) - Learn about Next.js features and API
+
+## Contributing
+
+Feel free to submit issues and enhancement requests! This starter is designed to be easily extensible.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Troubleshooting
+
+### Agent Connection Issues
+If you see "I'm having trouble connecting to my tools", make sure:
+1. The PydanticAI agent is running on port 8000
+2. Your OpenAI API key is set correctly
+3. Both servers started successfully
+
+### Python Dependencies
+If you encounter Python import errors:
+```bash
+cd agent
+uv sync
+uv run src/main.py
+```

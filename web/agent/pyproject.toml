@@ -1,11 +1,12 @@
 [project]
-name = "vpi-1000"
-version = "1.0.0"
-description = "VPI-1000"
-requires-python = ">=3.13,<3.14"
+name = "agent"
+version = "0.1.0"
+description = "Cavepedia AI Agent with MCP tools"
+readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
-    "pydantic-ai>=0.1.0",
-    "fastapi>=0.115.5,<1.0.0",
-    "uvicorn>=0.29.0,<1.0.0",
-    "python-dotenv>=1.0.0,<2.0.0",
+    "uvicorn",
+    "pydantic-ai[google,mcp,ag-ui]",
+    "python-dotenv",
+    "logfire>=4.10.0",
 ]
