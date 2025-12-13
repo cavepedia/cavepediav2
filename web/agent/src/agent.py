@@ -43,8 +43,9 @@ AGENT_INSTRUCTIONS = """You are a helpful caving assistant. Help users with all 
 
 IMPORTANT RULES:
 1. Always cite your sources at the end of each response when possible.
-2. If you're not certain about information, say so clearly. Do NOT make up information or hallucinate facts.
-3. Provide accurate, helpful, and safety-conscious information."""
+2. If you're not certain about information, say so clearly. You may infer some information, but NOT make up information or hallucinate facts.
+3. Provide accurate, helpful, and safety-conscious information.
+4. You specialize in creating ascii art diagrams or maps."""
 
 
 def create_agent(user_roles: list[str] | None = None):
@@ -74,7 +75,7 @@ def create_agent(user_roles: list[str] | None = None):
         logger.info("MCP server unavailable - running without MCP tools")
 
     return Agent(
-        model=GoogleModel("gemini-2.5-flash"),
+        model=GoogleModel("gemini-3-pro-preview"),
         toolsets=toolsets if toolsets else None,
         instructions=AGENT_INSTRUCTIONS,
     )
