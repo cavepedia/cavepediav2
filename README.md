@@ -8,6 +8,7 @@
 ```
                                     +------------------+
                                     |     Auth0        |
+                                    |   (RBAC roles)   |
                                     +--------+---------+
                                              |
                                              v
@@ -18,18 +19,22 @@
 +------------------+              |    - Auth0 SSO      |
                                   +----------+----------+
                                              |
+                                             | AG-UI Protocol
                                              v
                                   +----------+----------+
                                   |   web/agent/        |
-                                  |   (LangGraph)       |
+                                  |   (PydanticAI)      |
                                   |   - Google Gemini   |
+                                  |   - x-user-roles    |
                                   +----------+----------+
                                              |
+                                             | Streamable HTTP
                                              v
                                   +----------+----------+
                                   |      mcp/           |
                                   |   (FastMCP Server)  |
                                   |   - Semantic search |
+                                  |   - Role filtering  |
                                   +----------+----------+
                                              |
                         +--------------------+--------------------+
@@ -65,8 +70,8 @@
 | Component | Description | Tech Stack |
 |-----------|-------------|------------|
 | **web/** | Frontend application with chat UI | Next.js, CopilotKit, Auth0 |
-| **web/agent/** | AI agent for answering cave questions | LangGraph, Google Gemini |
-| **mcp/** | MCP server exposing semantic search tools | FastMCP, Cohere |
+| **web/agent/** | AI agent for answering cave questions | PydanticAI, AG-UI, Google Gemini |
+| **mcp/** | MCP server exposing semantic search tools | FastMCP, Starlette, Cohere |
 | **poller/** | Document ingestion and processing pipeline | Python, Claude API, Cohere |
 
 ## Data Flow
@@ -80,9 +85,11 @@
    - Stored in PostgreSQL with pgvector
 
 2. **Search & Chat** (mcp + agent)
+   - User authenticates via Auth0 (roles assigned)
    - User asks question via web UI
-   - Agent calls MCP tools for semantic search
-   - MCP queries pgvector for relevant documents
+   - Web API extracts user roles from session, passes to agent
+   - Agent creates MCP connection with `x-user-roles` header
+   - MCP queries pgvector, filtering by user's roles
    - Agent synthesizes response with citations
 
 ## Getting Started
@@ -95,6 +102,13 @@ See individual component READMEs:
 
 Each component requires its own environment variables. See the respective READMEs for details.
 
+| Component | Key Variables |
+|-----------|---------------|
+| **web/** | `AUTH0_*`, `AGENT_URL` |
+| **web/agent/** | `GOOGLE_API_KEY`, `CAVE_MCP_URL` |
+| **mcp/** | `COHERE_API_KEY`, `DB_*` |
+| **poller/** | `ANTHROPIC_API_KEY`, `COHERE_API_KEY`, `AWS_*`, `DB_*` |
+
 **Never commit `.env` files** - they are gitignored.
 
 ## CI/CD
@@ -106,6 +120,7 @@ Gitea Actions workflows build and push Docker images on changes to `main`:
 | build-push-web | `web/**` (excluding agent) | `cavepediav2-web:latest` |
 | build-push-agent | `web/agent/**` | `cavepediav2-agent:latest` |
 | build-push-poller | `poller/**` | `cavepediav2-poller:latest` |
+| build-push-mcp | `mcp/**` | `cavepediav2-mcp:latest` |
 
 ## License
 

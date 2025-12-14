@@ -75,7 +75,7 @@ def create_agent(user_roles: list[str] | None = None):
         logger.info("MCP server unavailable - running without MCP tools")
 
     return Agent(
-        model=GoogleModel("gemini-3-pro-preview"),
+        model=GoogleModel("gemini-2.5-pro"),
         toolsets=toolsets if toolsets else None,
         instructions=AGENT_INSTRUCTIONS,
     )
