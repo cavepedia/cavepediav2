@@ -76,12 +76,13 @@ def create_agent(user_roles: list[str] | None = None):
         logger.info("MCP server unavailable - running without MCP tools")
 
     # Use Vertex AI for higher rate limits (requires GOOGLE_APPLICATION_CREDENTIALS)
+    # Note: gemini-3-pro-preview requires location="global"
     provider = GoogleProvider(
         vertexai=True,
         project=os.getenv("GOOGLE_PROJECT_ID"),
-        location=os.getenv("GOOGLE_LOCATION", "us-central1"),
+        location=os.getenv("GOOGLE_LOCATION", "global"),
     )
-    model = GoogleModel("gemini-2.5-pro", provider=provider)
+    model = GoogleModel("gemini-3-pro-preview", provider=provider)
 
     return Agent(
         model=model,
