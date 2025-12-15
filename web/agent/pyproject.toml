@@ -9,6 +9,7 @@ dependencies = [
     "pydantic-ai",
     "mcp",
     "google-genai",
+    "google-cloud-aiplatform",
     "ag-ui-protocol",
     "python-dotenv",
     "httpx",

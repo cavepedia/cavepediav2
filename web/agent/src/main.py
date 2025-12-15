@@ -19,9 +19,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Validate required environment variables
-if not os.getenv("GOOGLE_API_KEY"):
-    logger.error("GOOGLE_API_KEY environment variable is required")
+# Validate required environment variables (either API key or service account)
+if not os.getenv("GOOGLE_API_KEY") and not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+    logger.error("Either GOOGLE_API_KEY or GOOGLE_APPLICATION_CREDENTIALS is required")
     sys.exit(1)
 
 import uvicorn

@@ -8,6 +8,7 @@ import httpx
 
 from pydantic_ai import Agent
 from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.providers.google import GoogleProvider
 
 # Set up logging based on environment
 log_level = logging.DEBUG if os.getenv("DEBUG") else logging.INFO
@@ -74,8 +75,16 @@ def create_agent(user_roles: list[str] | None = None):
     else:
         logger.info("MCP server unavailable - running without MCP tools")
 
+    # Use Vertex AI for higher rate limits (requires GOOGLE_APPLICATION_CREDENTIALS)
+    provider = GoogleProvider(
+        vertexai=True,
+        project=os.getenv("GOOGLE_PROJECT_ID"),
+        location=os.getenv("GOOGLE_LOCATION", "us-central1"),
+    )
+    model = GoogleModel("gemini-2.5-pro", provider=provider)
+
     return Agent(
-        model=GoogleModel("gemini-2.5-pro"),
+        model=model,
         toolsets=toolsets if toolsets else None,
         instructions=AGENT_INSTRUCTIONS,
     )

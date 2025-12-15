@@ -137,7 +137,7 @@ def split_files():
         key = row["key"]
 
         with conn.cursor() as cur:
-            logger.info(f"SPLITTING bucket: {bucket}, key: {key}")
+            logger.info(f"Splitting bucket: {bucket}, key: {key}")
 
             ##### get pdf #####
             s3.download_file(bucket, key, "/tmp/file.pdf")
@@ -145,6 +145,10 @@ def split_files():
             ##### split #####
             with open("/tmp/file.pdf", "rb") as f:
                 reader = PdfReader(f)
+
+                # Handle PDFs with permission restrictions (no password, but encrypted)
+                if reader.is_encrypted:
+                    reader.decrypt("")
 
                 for i in range(len(reader.pages)):
                     writer = PdfWriter()
