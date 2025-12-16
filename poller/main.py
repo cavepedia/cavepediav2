@@ -355,6 +355,23 @@ def fix_pages():
         i -= 1
 
 
+def upload_file_list():
+    """Upload a list of all processed files to S3"""
+    BUCKET_PUBLIC = "cavepediav2-public"
+
+    rows = conn.execute("SELECT key FROM metadata WHERE split = true ORDER BY key")
+    files = [row["key"] for row in rows]
+
+    content = "\n".join(files)
+    s3.put_object(
+        Bucket=BUCKET_PUBLIC,
+        Key="files.txt",
+        Body=content.encode("utf-8"),
+        ContentType="text/plain",
+    )
+    logger.info(f"Uploaded file list with {len(files)} files to s3://{BUCKET_PUBLIC}/files.txt")
+
+
 if __name__ == "__main__":
     create_tables()
 
@@ -364,6 +381,7 @@ if __name__ == "__main__":
         check_batches()
         ocr_main()
         embeddings_main()
+        upload_file_list()
 
         logger.info("sleeping 5 minutes")
         time.sleep(5 * 60)
