@@ -6,7 +6,8 @@ import os
 import logging
 import httpx
 
-from pydantic_ai import Agent
+from pydantic_ai import Agent, ModelMessage, RunContext
+from pydantic_ai.settings import ModelSettings
 
 # Set up logging based on environment
 log_level = logging.DEBUG if os.getenv("DEBUG") else logging.INFO
@@ -19,6 +20,12 @@ logger = logging.getLogger(__name__)
 CAVE_MCP_URL = os.getenv("CAVE_MCP_URL", "https://mcp.caving.dev/mcp")
 
 logger.info("Initializing Cavepedia agent...")
+
+
+def limit_history(ctx: RunContext[None], messages: list[ModelMessage]) -> list[ModelMessage]:
+    """Limit conversation history to manage token usage and request size."""
+    # Keep only the last few messages to avoid large requests hitting Cloudflare limits
+    return messages[-4:]
 
 def check_mcp_available(url: str, timeout: float = 5.0) -> bool:
     """Check if MCP server is reachable via health endpoint."""
@@ -38,14 +45,16 @@ def check_mcp_available(url: str, timeout: float = 5.0) -> bool:
 MCP_AVAILABLE = check_mcp_available(CAVE_MCP_URL)
 logger.info(f"MCP server available: {MCP_AVAILABLE}")
 
-AGENT_INSTRUCTIONS = """You are a helpful caving assistant. Help users with all aspects of caving including cave exploration, safety, surveying techniques, cave locations, geology, equipment, history, conservation, and any other caving-related topics.
+AGENT_INSTRUCTIONS = """Caving assistant. Help with exploration, safety, surveying, locations, geology, equipment, history, conservation.
 
-IMPORTANT RULES:
-1. Always cite your sources at the end of each response when possible.
-2. If you're not certain about information, say so clearly. You may infer some information, but NOT make up information or hallucinate facts.
-3. Provide accurate, helpful, and safety-conscious information.
-4. You specialize in creating ascii art diagrams or maps.
-5. Never use sycophantic phrases like "you're absolutely right", "great question", or excessive praise. Be direct and professional."""
+Rules:
+1. Cite sources when possible.
+2. Say when uncertain. Never hallucinate.
+3. Be safety-conscious.
+4. Can create ascii diagrams/maps.
+5. Be direct—no sycophantic phrases.
+6. Keep responses concise.
+7. Use tools sparingly—one search usually suffices. Answer from your knowledge when possible."""
 
 
 def create_agent(user_roles: list[str] | None = None):
@@ -75,9 +84,11 @@ def create_agent(user_roles: list[str] | None = None):
         logger.info("MCP server unavailable - running without MCP tools")
 
     return Agent(
-        model="openrouter:google/gemini-3-pro-preview",
+        model="anthropic:claude-sonnet-4-5",
         toolsets=toolsets if toolsets else None,
         instructions=AGENT_INSTRUCTIONS,
+        history_processors=[limit_history],
+        model_settings=ModelSettings(max_tokens=4096),
     )
 
 

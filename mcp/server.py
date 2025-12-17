@@ -59,7 +59,7 @@ def embed(text, input_type):
     assert resp.embeddings.float_ is not None
     return resp.embeddings.float_[0]
 
-def search(query, roles: list[str]) -> list[dict]:
+def search(query, roles: list[str], limit: int = 5) -> list[dict]:
     query_embedding = embed(query, 'search_query')
 
     if not roles:
@@ -67,34 +67,31 @@ def search(query, roles: list[str]) -> list[dict]:
         return []
 
     rows = conn.execute(
-        'SELECT * FROM embeddings WHERE embedding IS NOT NULL AND role = ANY(%s) ORDER BY embedding <=> %s::vector LIMIT 5',
-        (roles, query_embedding)
+        'SELECT * FROM embeddings WHERE embedding IS NOT NULL AND role = ANY(%s) ORDER BY embedding <=> %s::vector LIMIT %s',
+        (roles, query_embedding, limit)
     ).fetchall()
-    docs = []
-    for row in rows:
-        docs.append({ 'key': row['key'], 'content': row['content']})
-    return docs
+
+    return [{'key': row['key'], 'content': row['content']} for row in rows]
 
 @mcp.tool
 def get_cave_location(cave: str, state: str, county: str) -> list[dict]:
-    """Lookup cave location as coordinates. Returns up to 5 matches, ordered by most to least relevant."""
+    """Lookup cave location as coordinates."""
     roles = get_user_roles()
     return search(f'{cave} Location, latitude, Longitude. Located in {state} and {county} county.', roles)
 
 @mcp.tool
 def general_caving_information(query: str) -> list[dict]:
-    """General purpose endpoint for any topic related to caves. Returns up to 5 matches, ordered by most to least relevant."""
+    """General purpose search for any topic related to caves."""
     roles = get_user_roles()
     return search(query, roles)
 
 @mcp.tool
-def get_document_page(document: str, page: int) -> dict:
-    """Lookup a specific page of a document by its path and page number. Document should be the path like 'nss/compasstape/issue_20.pdf'."""
+def get_document_page(key: str) -> dict:
+    """Fetch full content for a document page. Pass the exact 'key' value from search results."""
     roles = get_user_roles()
     if not roles:
         return {"error": "No roles assigned"}
 
-    key = f"{document}/page-{page}.pdf"
     row = conn.execute(
         'SELECT key, content FROM embeddings WHERE key = %s AND role = ANY(%s)',
         (key, roles)

@@ -7,6 +7,8 @@ import sys
 import json
 import logging
 from dotenv import load_dotenv
+from pydantic_ai.usage import UsageLimits
+from pydantic_ai.settings import ModelSettings
 
 # Load environment variables BEFORE importing agent
 load_dotenv()
@@ -20,8 +22,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Validate required environment variables
-if not os.getenv("OPENROUTER_API_KEY"):
-    logger.error("OPENROUTER_API_KEY environment variable is required")
+if not os.getenv("ANTHROPIC_API_KEY"):
+    logger.error("ANTHROPIC_API_KEY environment variable is required")
     sys.exit(1)
 
 import uvicorn
@@ -57,8 +59,16 @@ async def handle_agent_request(request: Request) -> Response:
     # Create agent with the user's roles
     agent = create_agent(user_roles)
 
-    # Dispatch the request using AGUIAdapter
-    return await AGUIAdapter.dispatch_request(request, agent=agent)
+    # Dispatch the request using AGUIAdapter with usage limits
+    return await AGUIAdapter.dispatch_request(
+        request,
+        agent=agent,
+        usage_limits=UsageLimits(
+            request_limit=5,      # Max 5 LLM requests per query
+            tool_calls_limit=3,   # Max 3 tool calls per query
+        ),
+        model_settings=ModelSettings(max_tokens=4096),
+    )
 
 
 async def health(request: Request) -> Response:
