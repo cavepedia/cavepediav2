@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Cave background -->
+  <rect width="32" height="32" fill="#1a1a2e"/>
+
+  <!-- Stalagmite -->
+  <path d="M16 4 L22 28 L10 28 Z" fill="#8b7355"/>
+  <path d="M16 4 L14 28 L10 28 Z" fill="#6b5344"/>
+
+  <!-- Highlight -->
+  <path d="M16 4 L18 28 L16 28 Z" fill="#a08060"/>
+
+  <!-- Small stalagmites -->
+  <path d="M6 18 L8 28 L4 28 Z" fill="#7a6348"/>
+  <path d="M26 20 L28 28 L24 28 Z" fill="#7a6348"/>
+</svg>
