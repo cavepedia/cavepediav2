@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 CAVE_MCP_URL = os.getenv("CAVE_MCP_URL", "https://mcp.caving.dev/mcp")
 
-logger.info("Initializing Cavepedia agent...")
+logger.info(f"Initializing Cavepedia agent with CAVE_MCP_URL={CAVE_MCP_URL}")
 
 
 def limit_history(ctx: RunContext[None], messages: list[ModelMessage]) -> list[ModelMessage]:
@@ -32,6 +32,7 @@ def check_mcp_available(url: str, timeout: float = 5.0) -> bool:
     try:
         # Use the health endpoint instead of the MCP endpoint
         health_url = url.rsplit("/", 1)[0] + "/health"
+        logger.info(f"Checking MCP health at: {health_url}")
         response = httpx.get(health_url, timeout=timeout, follow_redirects=True)
         if response.status_code == 200:
             return True
