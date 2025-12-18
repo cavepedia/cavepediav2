@@ -59,11 +59,10 @@ def embed(text, input_type):
     assert resp.embeddings.float_ is not None
     return resp.embeddings.float_[0]
 
-def search(query, roles: list[str], limit: int = 5) -> list[dict]:
+def search(query, roles: list[str], limit: int = 3, max_content_length: int = 1500) -> list[dict]:
     query_embedding = embed(query, 'search_query')
 
     if not roles:
-        # No roles = no results
         return []
 
     rows = conn.execute(
@@ -71,7 +70,13 @@ def search(query, roles: list[str], limit: int = 5) -> list[dict]:
         (roles, query_embedding, limit)
     ).fetchall()
 
-    return [{'key': row['key'], 'content': row['content']} for row in rows]
+    docs = []
+    for row in rows:
+        content = row['content'] or ''
+        if len(content) > max_content_length:
+            content = content[:max_content_length] + '...[truncated, use get_document_page for full text]'
+        docs.append({'key': row['key'], 'content': content})
+    return docs
 
 @mcp.tool
 def get_cave_location(cave: str, state: str, county: str) -> list[dict]:
