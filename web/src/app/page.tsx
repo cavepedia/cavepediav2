@@ -7,20 +7,29 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
 
-// Separate component to safely use useCopilotChat hook
-function ThinkingIndicator() {
+// Block input and show indicator while agent is processing
+function LoadingOverlay() {
   try {
     const { isLoading } = useCopilotChat();
     if (!isLoading) return null;
     return (
-      <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2 z-50">
-        <div className="flex gap-1">
-          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+      <>
+        {/* Overlay to block input area */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-24 z-40"
+          style={{ pointerEvents: 'all' }}
+          onClick={(e) => e.stopPropagation()}
+        />
+        {/* Thinking indicator */}
+        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-2 z-50">
+          <div className="flex gap-1">
+            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+          </div>
+          <span className="text-sm text-gray-600">Thinking...</span>
         </div>
-        <span className="text-sm text-gray-600">Thinking...</span>
-      </div>
+      </>
     );
   } catch {
     return null;
@@ -121,7 +130,7 @@ export default function CopilotKitPage() {
             className="h-full w-full"
           />
         </div>
-        <ThinkingIndicator />
+        <LoadingOverlay />
       </div>
     </main>
   );
