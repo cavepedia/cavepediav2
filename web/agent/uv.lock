@@ -236,6 +236,7 @@ dependencies = [
     { name = "openai" },
     { name = "pydantic-ai" },
     { name = "python-dotenv" },
+    { name = "python-json-logger" },
     { name = "starlette" },
     { name = "uvicorn" },
 ]
@@ -249,6 +250,7 @@ requires-dist = [
     { name = "openai" },
     { name = "pydantic-ai" },
     { name = "python-dotenv" },
+    { name = "python-json-logger", specifier = ">=4.0.0" },
     { name = "starlette" },
     { name = "uvicorn" },
 ]

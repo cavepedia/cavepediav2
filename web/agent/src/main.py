@@ -14,12 +14,26 @@ from pydantic_ai.settings import ModelSettings
 load_dotenv()
 
 # Set up logging based on environment
-log_level = logging.DEBUG if os.getenv("DEBUG") else logging.INFO
+from pythonjsonlogger import jsonlogger
+
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+json_formatter = jsonlogger.JsonFormatter("%(asctime)s %(name)s %(levelname)s %(message)s")
+
+# Configure root logger with JSON
+handler = logging.StreamHandler()
+handler.setFormatter(json_formatter)
 logging.basicConfig(
-    level=log_level,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=getattr(logging, log_level, logging.INFO),
+    handlers=[handler],
 )
 logger = logging.getLogger(__name__)
+
+# Apply JSON formatter to uvicorn loggers (works even when run via `uvicorn src.main:app`)
+for uvicorn_logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+    uvicorn_logger = logging.getLogger(uvicorn_logger_name)
+    uvicorn_logger.handlers = [handler]
+    uvicorn_logger.setLevel(getattr(logging, log_level, logging.INFO))
+    uvicorn_logger.propagate = False
 
 # Validate required environment variables
 if not os.getenv("ANTHROPIC_API_KEY"):
@@ -41,12 +55,9 @@ logger.info("Creating AG-UI app...")
 
 async def handle_agent_request(request: Request) -> Response:
     """Handle incoming AG-UI requests with dynamic role-based MCP configuration."""
-    # Debug: log all incoming headers
-    logger.info(f"DEBUG: All request headers: {dict(request.headers)}")
 
     # Extract user roles from request headers
     roles_header = request.headers.get("x-user-roles", "")
-    logger.info(f"DEBUG: x-user-roles header value: '{roles_header}'")
     user_roles = []
 
     if roles_header:

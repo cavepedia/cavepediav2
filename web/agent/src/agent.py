@@ -7,10 +7,20 @@ import logging
 import httpx
 import logfire
 
+# Set up logging BEFORE logfire (otherwise basicConfig is ignored)
+from pythonjsonlogger import jsonlogger
+
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+handler = logging.StreamHandler()
+handler.setFormatter(jsonlogger.JsonFormatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    handlers=[handler],
+)
+logger = logging.getLogger(__name__)
+
 # Configure Logfire for observability
-# Uses LOGFIRE_TOKEN in production, or local auth from `logfire auth` in dev
 logfire.configure(
-    project_name='cavepediav2',
     environment=os.getenv('ENVIRONMENT', 'development'),
 )
 logfire.instrument_pydantic_ai()
@@ -18,14 +28,6 @@ logfire.instrument_httpx()
 
 from pydantic_ai import Agent, ModelMessage, RunContext
 from pydantic_ai.settings import ModelSettings
-
-# Set up logging based on environment
-log_level = logging.DEBUG if os.getenv("DEBUG") else logging.INFO
-logging.basicConfig(
-    level=log_level,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 CAVE_MCP_URL = os.getenv("CAVE_MCP_URL", "https://mcp.caving.dev/mcp")
 
