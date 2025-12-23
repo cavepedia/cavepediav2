@@ -12,4 +12,5 @@ dependencies = [
     "ag-ui-protocol",
     "python-dotenv",
     "httpx",
+    "logfire>=4.16.0",
 ]

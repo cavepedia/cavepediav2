@@ -5,6 +5,16 @@ PydanticAI agent with MCP tools from Cavepedia server.
 import os
 import logging
 import httpx
+import logfire
+
+# Configure Logfire for observability
+# Uses LOGFIRE_TOKEN in production, or local auth from `logfire auth` in dev
+logfire.configure(
+    project_name='cavepediav2',
+    environment=os.getenv('ENVIRONMENT', 'development'),
+)
+logfire.instrument_pydantic_ai()
+logfire.instrument_httpx()
 
 from pydantic_ai import Agent, ModelMessage, RunContext
 from pydantic_ai.settings import ModelSettings
