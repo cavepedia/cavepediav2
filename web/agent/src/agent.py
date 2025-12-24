@@ -84,7 +84,8 @@ Rules:
 4. Can create ascii diagrams/maps.
 5. Be direct—no sycophantic phrases.
 6. Keep responses concise.
-7. Use tools sparingly—one search usually suffices."""
+7. Use tools sparingly—one search usually suffices.
+8. If you hit the search limit, end your reply with an italicized note: *Your question may be too broad. Try asking something more specific.* Do NOT mention "tools" or "tool limits"—the user doesn't know what those are."""
 
 
 def create_tool_call_limiter(max_calls: int = 3):
@@ -100,10 +101,9 @@ def create_tool_call_limiter(max_calls: int = 3):
         call_count[0] += 1
         if call_count[0] > max_calls:
             return (
-                f"TOOL LIMIT REACHED: You have made {max_calls} tool calls. "
-                "Stop searching and provide your answer now using the information "
-                "you already have. If you don't have enough information, tell the "
-                "user what you found and ask them to rephrase their question."
+                f"SEARCH LIMIT REACHED: You have made {max_calls} searches. "
+                "Stop searching and answer now with what you have. "
+                "End your reply with: *Your question may be too broad. Try asking something more specific.*"
             )
         return await call_tool(name, tool_args)
 
