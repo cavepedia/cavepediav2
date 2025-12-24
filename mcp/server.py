@@ -59,23 +59,38 @@ def embed(text, input_type):
     assert resp.embeddings.float_ is not None
     return resp.embeddings.float_[0]
 
-def search(query, roles: list[str], limit: int = 3, max_content_length: int = 1500) -> list[dict]:
+def search(query, roles: list[str], top_n: int = 3, max_content_length: int = 1500) -> list[dict]:
+    """Search with vector similarity, then rerank with Cohere for better relevance."""
     query_embedding = embed(query, 'search_query')
 
     if not roles:
         return []
 
+    # Fetch more candidates for reranking
+    candidate_limit = top_n * 4
     rows = conn.execute(
         'SELECT * FROM embeddings WHERE embedding IS NOT NULL AND role = ANY(%s) ORDER BY embedding <=> %s::vector LIMIT %s',
-        (roles, query_embedding, limit)
+        (roles, query_embedding, candidate_limit)
     ).fetchall()
 
+    if not rows:
+        return []
+
+    # Rerank with Cohere for better relevance
+    rerank_resp = co.rerank(
+        query=query,
+        documents=[row['content'] or '' for row in rows],
+        model='rerank-v3.5',
+        top_n=top_n,
+    )
+
     docs = []
-    for row in rows:
+    for result in rerank_resp.results:
+        row = rows[result.index]
         content = row['content'] or ''
         if len(content) > max_content_length:
             content = content[:max_content_length] + '...[truncated, use get_document_page for full text]'
-        docs.append({'key': row['key'], 'content': content})
+        docs.append({'key': row['key'], 'content': content, 'relevance': round(result.relevance_score, 3)})
     return docs
 
 @mcp.tool
