@@ -26,8 +26,10 @@ logfire.configure(
 logfire.instrument_pydantic_ai()
 logfire.instrument_httpx()
 
+from typing import Any
 from pydantic_ai import Agent, ModelMessage, RunContext
 from pydantic_ai.settings import ModelSettings
+from pydantic_ai.mcp import CallToolFunc
 
 CAVE_MCP_URL = os.getenv("CAVE_MCP_URL", "https://mcp.caving.dev/mcp")
 
@@ -85,6 +87,29 @@ Rules:
 7. Use tools sparingly—one search usually suffices."""
 
 
+def create_tool_call_limiter(max_calls: int = 3):
+    """Create a process_tool_call callback that limits tool calls."""
+    call_count = [0]  # Mutable container for closure
+
+    async def process_tool_call(
+        ctx: RunContext,
+        call_tool: CallToolFunc,
+        name: str,
+        tool_args: dict[str, Any],
+    ):
+        call_count[0] += 1
+        if call_count[0] > max_calls:
+            return (
+                f"TOOL LIMIT REACHED: You have made {max_calls} tool calls. "
+                "Stop searching and provide your answer now using the information "
+                "you already have. If you don't have enough information, tell the "
+                "user what you found and ask them to rephrase their question."
+            )
+        return await call_tool(name, tool_args)
+
+    return process_tool_call
+
+
 def create_agent(user_roles: list[str] | None = None):
     """Create an agent with MCP tools configured for the given user roles."""
     toolsets = []
@@ -104,6 +129,7 @@ def create_agent(user_roles: list[str] | None = None):
                 url=CAVE_MCP_URL,
                 headers={"x-user-roles": roles_header},
                 timeout=30.0,
+                process_tool_call=create_tool_call_limiter(max_calls=3),
             )
             toolsets.append(mcp_server)
             logger.info(f"MCP server configured with roles: {user_roles}")

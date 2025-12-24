@@ -70,13 +70,12 @@ async def handle_agent_request(request: Request) -> Response:
     # Create agent with the user's roles
     agent = create_agent(user_roles)
 
-    # Dispatch the request using AGUIAdapter with usage limits
+    # Dispatch the request - tool limits handled by ToolCallLimiter in agent.py
     return await AGUIAdapter.dispatch_request(
         request,
         agent=agent,
         usage_limits=UsageLimits(
-            request_limit=5,      # Max 5 LLM requests per query
-            tool_calls_limit=3,   # Max 3 tool calls per query
+            request_limit=10,     # Safety net for runaway requests
         ),
         model_settings=ModelSettings(max_tokens=4096),
     )
