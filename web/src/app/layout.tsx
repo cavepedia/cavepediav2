@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { CopilotKit } from "@copilotkit/react-core";
 import { Auth0Provider } from "@auth0/nextjs-auth0/client";
 import "./globals.css";
 import "@copilotkit/react-ui/styles.css";
@@ -19,9 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={"antialiased"}>
         <Auth0Provider>
-          <CopilotKit runtimeUrl="/api/copilotkit" agent="vpi_1000">
-            {children}
-          </CopilotKit>
+          {children}
         </Auth0Provider>
       </body>
     </html>

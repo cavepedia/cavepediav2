@@ -67,8 +67,13 @@ async def handle_agent_request(request: Request) -> Response:
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse x-user-roles header: {e}")
 
-    # Create agent with the user's roles
-    agent = create_agent(user_roles)
+    # Extract sources-only mode from header
+    sources_only = request.headers.get("x-sources-only", "false") == "true"
+    if sources_only:
+        logger.info("Sources-only mode enabled")
+
+    # Create agent with the user's roles and mode
+    agent = create_agent(user_roles, sources_only=sources_only)
 
     # Dispatch the request - tool limits handled by ToolCallLimiter in agent.py
     return await AGUIAdapter.dispatch_request(

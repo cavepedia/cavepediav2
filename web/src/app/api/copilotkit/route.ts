@@ -15,13 +15,19 @@ export const POST = async (req: NextRequest) => {
   const session = await auth0.getSession();
   const userRoles = (session?.user?.roles as string[]) || [];
 
-  console.log("DEBUG: User roles from session:", userRoles);
+  // Get sources-only mode from query param
+  const url = new URL(req.url);
+  const sourcesOnly = url.searchParams.get("sourcesOnly") === "true";
 
-  // Create HttpAgent with user roles header
+  console.log("DEBUG: User roles from session:", userRoles);
+  console.log("DEBUG: Sources only mode:", sourcesOnly);
+
+  // Create HttpAgent with user roles and sources-only headers
   const agent = new HttpAgent({
     url: process.env.AGENT_URL || "http://localhost:8000/",
     headers: {
       "x-user-roles": JSON.stringify(userRoles),
+      "x-sources-only": sourcesOnly ? "true" : "false",
     },
   });
 

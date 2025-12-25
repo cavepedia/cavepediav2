@@ -1,6 +1,6 @@
 "use client";
 
-import { useCopilotAction, useCopilotChat } from "@copilotkit/react-core";
+import { CopilotKit, useCopilotAction, useCopilotChat } from "@copilotkit/react-core";
 import { CopilotKitCSSProperties, CopilotChat } from "@copilotkit/react-ui";
 import { useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
@@ -36,10 +36,8 @@ function LoadingOverlay() {
   }
 }
 
-export default function CopilotKitPage() {
-  const [themeColor, setThemeColor] = useState("#6366f1");
-  const { user, isLoading: authLoading } = useUser();
-
+// Chat content with CopilotKit hooks - must be inside CopilotKit provider
+function ChatContent({ themeColor, setThemeColor }: { themeColor: string; setThemeColor: (color: string) => void }) {
   useCopilotAction({
     name: "setThemeColor",
     parameters: [{
@@ -51,6 +49,35 @@ export default function CopilotKitPage() {
       setThemeColor(themeColor);
     },
   });
+
+  return (
+    <div
+      className="flex-1 flex justify-center py-8 px-2 overflow-hidden relative"
+      style={{ "--copilot-kit-primary-color": themeColor } as CopilotKitCSSProperties}
+    >
+      <div className="h-full w-full max-w-5xl flex flex-col">
+        <CopilotChat
+          labels={{
+            title: "AI Cartwright",
+            initial: "Hello! I'm here to help with anything related to caving. Ask me about caves, techniques, safety, equipment, or anything else caving-related!",
+          }}
+          className="h-full w-full"
+        />
+      </div>
+      <LoadingOverlay />
+    </div>
+  );
+}
+
+export default function CopilotKitPage() {
+  const [themeColor, setThemeColor] = useState("#6366f1");
+  const [sourcesOnlyMode, setSourcesOnlyMode] = useState(false);
+  const { user, isLoading: authLoading } = useUser();
+
+  // Dynamic runtime URL based on sources-only mode
+  const runtimeUrl = sourcesOnlyMode
+    ? "/api/copilotkit?sourcesOnly=true"
+    : "/api/copilotkit";
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -88,50 +115,51 @@ export default function CopilotKitPage() {
 
   // If authenticated, show the CopilotKit chat with user profile
   return (
-    <main
-      style={{ "--copilot-kit-primary-color": themeColor } as CopilotKitCSSProperties}
-      className="h-screen w-screen flex flex-col bg-gray-50"
+    <CopilotKit
+      runtimeUrl={runtimeUrl}
+      agent="vpi_1000"
+      key={sourcesOnlyMode ? "sources" : "normal"}
     >
-      {/* Header with user profile and logout */}
-      <div className="w-full bg-white shadow-sm border-b border-gray-200 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-gray-900">Cavepedia</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            {user.picture && (
-              <img
-                src={user.picture}
-                alt={user.name || 'User'}
-                className="w-8 h-8 rounded-full"
-              />
-            )}
-            <div className="flex flex-col items-end">
-              <span className="text-sm text-gray-700">{user.name}</span>
-              {(user as any).roles && (user as any).roles.length > 0 && (
-                <span className="text-xs text-gray-500">
-                  {(user as any).roles.join(', ')}
-                </span>
-              )}
+      <main className="h-screen w-screen flex flex-col bg-gray-50">
+        {/* Header with user profile and logout */}
+        <div className="w-full bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-semibold text-gray-900">Cavepedia</h1>
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sourcesOnlyMode}
+                  onChange={(e) => setSourcesOnlyMode(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                Sources only
+              </label>
             </div>
-            <LogoutButton />
+            <div className="flex items-center gap-4">
+              {user.picture && (
+                <img
+                  src={user.picture}
+                  alt={user.name || 'User'}
+                  className="w-8 h-8 rounded-full"
+                />
+              )}
+              <div className="flex flex-col items-end">
+                <span className="text-sm text-gray-700">{user.name}</span>
+                {(user as any).roles && (user as any).roles.length > 0 && (
+                  <span className="text-xs text-gray-500">
+                    {(user as any).roles.join(', ')}
+                  </span>
+                )}
+              </div>
+              <LogoutButton />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* CopilotKit Chat */}
-      <div className="flex-1 flex justify-center py-8 px-2 overflow-hidden relative">
-        <div className="h-full w-full max-w-5xl flex flex-col">
-          <CopilotChat
-            labels={{
-              title: "AI Cartwright",
-              initial: "Hello! I'm here to help with anything related to caving. Ask me about caves, techniques, safety, equipment, or anything else caving-related!",
-            }}
-            className="h-full w-full"
-          />
-        </div>
-        <LoadingOverlay />
-      </div>
-    </main>
+        {/* CopilotKit Chat */}
+        <ChatContent themeColor={themeColor} setThemeColor={setThemeColor} />
+      </main>
+    </CopilotKit>
   );
 }

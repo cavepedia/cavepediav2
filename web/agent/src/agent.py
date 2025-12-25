@@ -87,6 +87,8 @@ Rules:
 7. Use tools sparingly—one search usually suffices.
 8. If you hit the search limit, end your reply with an italicized note: *Your question may be too broad. Try asking something more specific.* Do NOT mention "tools" or "tool limits"—the user doesn't know what those are."""
 
+SOURCES_ONLY_INSTRUCTIONS = """SOURCES ONLY MODE: Give a 1-2 sentence summary maximum. Focus on listing sources in a bulleted list. No detailed explanations."""
+
 
 def create_tool_call_limiter(max_calls: int = 3):
     """Create a process_tool_call callback that limits tool calls."""
@@ -110,7 +112,7 @@ def create_tool_call_limiter(max_calls: int = 3):
     return process_tool_call
 
 
-def create_agent(user_roles: list[str] | None = None):
+def create_agent(user_roles: list[str] | None = None, sources_only: bool = False):
     """Create an agent with MCP tools configured for the given user roles."""
     toolsets = []
 
@@ -140,10 +142,15 @@ def create_agent(user_roles: list[str] | None = None):
     else:
         logger.info("MCP server unavailable - running without MCP tools")
 
+    # Build instructions based on mode
+    instructions = AGENT_INSTRUCTIONS
+    if sources_only:
+        instructions = f"{SOURCES_ONLY_INSTRUCTIONS}\n\n{AGENT_INSTRUCTIONS}"
+
     return Agent(
         model="anthropic:claude-sonnet-4-5",
         toolsets=toolsets if toolsets else None,
-        instructions=AGENT_INSTRUCTIONS,
+        instructions=instructions,
         history_processors=[limit_history],
         model_settings=ModelSettings(max_tokens=4096),
     )
