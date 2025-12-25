@@ -59,7 +59,7 @@ def embed(text, input_type):
     assert resp.embeddings.float_ is not None
     return resp.embeddings.float_[0]
 
-def search(query, roles: list[str], top_n: int = 3, max_content_length: int = 1500) -> list[dict]:
+def search(query, roles: list[str], top_n: int = 3, max_content_length: int = 1500, priority_prefixes: list[str] | None = None) -> list[dict]:
     """Search with vector similarity, then rerank with Cohere for better relevance."""
     query_embedding = embed(query, 'search_query')
 
@@ -81,17 +81,29 @@ def search(query, roles: list[str], top_n: int = 3, max_content_length: int = 15
         query=query,
         documents=[row['content'] or '' for row in rows],
         model='rerank-v3.5',
-        top_n=top_n,
+        top_n=min(top_n * 2, len(rows)),  # Get more for re-sorting after boost
     )
 
+    # Build results with optional priority boost
     docs = []
     for result in rerank_resp.results:
         row = rows[result.index]
+        score = result.relevance_score
+
+        # Boost score if key starts with any priority prefix (e.g., 'nss/aca')
+        if priority_prefixes:
+            key = row['key'] or ''
+            if any(key.startswith(prefix) for prefix in priority_prefixes):
+                score = min(1.0, score * 1.3)  # 30% boost, capped at 1.0
+
         content = row['content'] or ''
         if len(content) > max_content_length:
             content = content[:max_content_length] + '...[truncated, use get_document_page for full text]'
-        docs.append({'key': row['key'], 'content': content, 'relevance': round(result.relevance_score, 3)})
-    return docs
+        docs.append({'key': row['key'], 'content': content, 'relevance': round(score, 3)})
+
+    # Re-sort by boosted score and return top_n
+    docs.sort(key=lambda x: x['relevance'], reverse=True)
+    return docs[:top_n]
 
 @mcp.tool
 def get_cave_location(cave: str, state: str, county: str) -> list[dict]:
@@ -100,10 +112,15 @@ def get_cave_location(cave: str, state: str, county: str) -> list[dict]:
     return search(f'{cave} Location, latitude, Longitude. Located in {state} and {county} county.', roles)
 
 @mcp.tool
-def general_caving_information(query: str) -> list[dict]:
-    """General purpose search for any topic related to caves."""
+def general_caving_information(query: str, priority_prefixes: list[str] | None = None) -> list[dict]:
+    """General purpose search for any topic related to caves.
+
+    Args:
+        query: Search query
+        priority_prefixes: Optional list of key prefixes to prioritize in results (e.g., ['nss/aca'] for rescue topics)
+    """
     roles = get_user_roles()
-    return search(query, roles)
+    return search(query, roles, priority_prefixes=priority_prefixes)
 
 @mcp.tool
 def get_document_page(key: str) -> dict:

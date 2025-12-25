@@ -85,7 +85,8 @@ Rules:
 5. Be direct—no sycophantic phrases.
 6. Keep responses concise.
 7. Use tools sparingly—one search usually suffices.
-8. If you hit the search limit, end your reply with an italicized note: *Your question may be too broad. Try asking something more specific.* Do NOT mention "tools" or "tool limits"—the user doesn't know what those are."""
+8. If you hit the search limit, end your reply with an italicized note: *Your question may be too broad. Try asking something more specific.* Do NOT mention "tools" or "tool limits"—the user doesn't know what those are.
+9. For rescue, accident, or emergency-related queries, use priority_prefixes=['nss/aca'] when searching to prioritize official accident reports."""
 
 SOURCES_ONLY_INSTRUCTIONS = """SOURCES ONLY MODE: Give exactly ONE sentence summary. Then list sources with specific page numbers (e.g., "- The Trog 2021, page 19"). No explanations."""
 
