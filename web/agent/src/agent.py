@@ -81,7 +81,12 @@ Rules:
 5. SEARCH EXACTLY ONCE. After searching, IMMEDIATELY answer using those results. NEVER search again - additional searches are blocked and waste resources.
 6. For rescue, accident, or emergency-related queries, use priority_prefixes=['nss/aca'] when searching to prioritize official accident reports."""
 
-SOURCES_ONLY_INSTRUCTIONS = """SOURCES ONLY MODE: Return ONLY the list of sources. No summary, no explanations, no other text. Just format the source keys as a bulleted list (e.g., "- The Trog 2021, page 19")."""
+SOURCES_ONLY_INSTRUCTIONS = """Return ONLY a bulleted list of sources. No summary, no explanations, no other text.
+
+Rules:
+1. Format sources human-readably (e.g., "- The Trog 2021, page 19" not "vpi/trog/2021-trog.pdf/page-19.pdf").
+2. SEARCH EXACTLY ONCE. After searching, IMMEDIATELY list sources. NEVER search again.
+3. For rescue, accident, or emergency-related queries, use priority_prefixes=['nss/aca'] when searching."""
 
 
 def create_search_limiter():
@@ -137,9 +142,7 @@ def create_agent(user_roles: list[str] | None = None, sources_only: bool = False
         logger.info("MCP server unavailable - running without MCP tools")
 
     # Build instructions based on mode
-    instructions = AGENT_INSTRUCTIONS
-    if sources_only:
-        instructions = f"{SOURCES_ONLY_INSTRUCTIONS}\n\n{AGENT_INSTRUCTIONS}"
+    instructions = SOURCES_ONLY_INSTRUCTIONS if sources_only else AGENT_INSTRUCTIONS
 
     return Agent(
         model="anthropic:claude-sonnet-4-5",
