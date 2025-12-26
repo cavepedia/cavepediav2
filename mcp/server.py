@@ -49,6 +49,11 @@ def get_user_roles() -> list[str]:
     print("DEBUG: No roles header found, returning empty list")
     return []
 
+def is_sources_only() -> bool:
+    """Check if sources-only mode is enabled via header."""
+    headers = get_http_headers()
+    return headers.get("x-sources-only", "false") == "true"
+
 def embed(text, input_type):
     resp = co.embed(
         texts=[text],
@@ -94,6 +99,7 @@ def search_caving_documents(query: str, priority_prefixes: list[str] | None = No
 
     # Build results with optional priority boost
     docs = []
+    sources_only = is_sources_only()
     for result in rerank_resp.results:
         row = rows[result.index]
         score = result.relevance_score
@@ -104,8 +110,11 @@ def search_caving_documents(query: str, priority_prefixes: list[str] | None = No
             if any(key.startswith(prefix) for prefix in priority_prefixes):
                 score = min(1.0, score * 1.3)
 
-        content = row['content'] or ''
-        docs.append({'key': row['key'], 'content': content, 'relevance': round(score, 3)})
+        if sources_only:
+            docs.append({'key': row['key'], 'relevance': round(score, 3)})
+        else:
+            content = row['content'] or ''
+            docs.append({'key': row['key'], 'content': content, 'relevance': round(score, 3)})
 
     # Re-sort by boosted score and return top_n
     docs.sort(key=lambda x: x['relevance'], reverse=True)

@@ -123,7 +123,10 @@ def create_agent(user_roles: list[str] | None = None, sources_only: bool = False
 
             mcp_server = MCPServerStreamableHTTP(
                 url=CAVE_MCP_URL,
-                headers={"x-user-roles": roles_header},
+                headers={
+                    "x-user-roles": roles_header,
+                    "x-sources-only": "true" if sources_only else "false",
+                },
                 timeout=30.0,
                 process_tool_call=create_search_limiter(),
             )
