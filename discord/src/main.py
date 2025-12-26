@@ -58,11 +58,17 @@ class CavepediaBot(discord.Client):
         """Called when the bot is starting up."""
         await self.agent_client.start()
 
-        # Register the cavesearch command
-        @self.tree.command(name="cavesearch", description="Search the caving knowledge base")
+        # Register the cavesearch command (sources only)
+        @self.tree.command(name="cavesearch", description="Search the caving knowledge base (sources only)")
         @app_commands.describe(query="Your question about caving")
         async def cavesearch(interaction: discord.Interaction, query: str):
-            await self.handle_search(interaction, query)
+            await self.handle_search(interaction, query, sources_only=True)
+
+        # Register the cavechat command (full response)
+        @self.tree.command(name="cavechat", description="Ask the caving AI assistant")
+        @app_commands.describe(query="Your question about caving")
+        async def cavechat(interaction: discord.Interaction, query: str):
+            await self.handle_search(interaction, query, sources_only=False)
 
         # Sync commands to specific guilds for instant availability
         for guild_id in [1137321345718439959, 1454125232439955471]:
@@ -91,8 +97,8 @@ class CavepediaBot(discord.Client):
         else:
             logger.warning("Agent server health check failed")
 
-    async def handle_search(self, interaction: discord.Interaction, query: str):
-        """Handle the /cavesearch command."""
+    async def handle_search(self, interaction: discord.Interaction, query: str, sources_only: bool):
+        """Handle the /cavesearch and /cavechat commands."""
         # Check if channel is allowed
         if interaction.channel_id not in self.config.allowed_channels:
             await interaction.response.send_message(
@@ -115,7 +121,7 @@ class CavepediaBot(discord.Client):
                 f"Processing query from {interaction.user} in #{interaction.channel}: {query[:100]}..."
             )
 
-            response = await self.agent_client.query(query)
+            response = await self.agent_client.query(query, sources_only=sources_only)
 
             # Discord has a 2000 character limit
             if len(response) > 2000:

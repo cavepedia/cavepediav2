@@ -41,20 +41,26 @@ class AgentClient:
             logger.warning(f"Agent health check failed: {e}")
             return False
 
-    async def query(self, message: str) -> str:
+    async def query(self, message: str, sources_only: bool | None = None) -> str:
         """
         Send a query to the agent and return the response.
 
         The agent uses AG-UI protocol with SSE streaming. We collect
         the full response for Discord (which doesn't support streaming).
+
+        Args:
+            message: The query to send
+            sources_only: Override the default sources_only setting
         """
         if not self._client:
             raise RuntimeError("Agent client not initialized")
 
+        use_sources_only = sources_only if sources_only is not None else self.sources_only
+
         headers = {
             "Content-Type": "application/json",
             "x-user-roles": json.dumps(self.default_roles),
-            "x-sources-only": "true" if self.sources_only else "false",
+            "x-sources-only": "true" if use_sources_only else "false",
         }
 
         # AG-UI protocol request format (RunAgentInput)
