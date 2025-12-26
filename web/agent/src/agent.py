@@ -62,7 +62,7 @@ Rules:
 5. SEARCH EXACTLY ONCE. After searching, IMMEDIATELY answer using those results. NEVER search again - additional searches are blocked and waste resources.
 6. For rescue, accident, or emergency-related queries, use priority_prefixes=['nss/aca'] when searching to prioritize official accident reports."""
 
-SOURCES_ONLY_INSTRUCTIONS = """SOURCES ONLY MODE: Give exactly ONE sentence summary. Then list sources with specific page numbers (e.g., "- The Trog 2021, page 19"). No explanations."""
+SOURCES_ONLY_INSTRUCTIONS = """SOURCES ONLY MODE: Return ONLY the list of sources. No summary, no explanations, no other text. Just format the source keys as a bulleted list (e.g., "- The Trog 2021, page 19")."""
 
 
 def create_search_limiter():
