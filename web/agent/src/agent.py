@@ -26,7 +26,6 @@ logfire.configure(
 logfire.instrument_pydantic_ai()
 logfire.instrument_httpx()
 
-from typing import Any
 from pydantic_ai import Agent, ModelMessage, RunContext
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.mcp import CallToolFunc
@@ -43,8 +42,8 @@ def limit_history(ctx: RunContext[None], messages: list[ModelMessage]) -> list[M
     if not messages:
         return messages
 
-    # Keep only the last 4 messages
-    messages = messages[-4:]
+    # Keep last 10 messages
+    messages = messages[-10:]
 
     # Check if the last message is an assistant response with a tool call
     # If so, remove it - it's orphaned (no tool result followed)
@@ -80,34 +79,28 @@ AGENT_INSTRUCTIONS = """Caving assistant. Help with exploration, safety, surveyi
 Rules:
 1. ALWAYS cite sources in a bulleted list at the end of every reply, even if there's only one. Format them human-readably (e.g., "- The Trog 2021, page 19" not "vpi/trog/2021-trog.pdf/page-19.pdf").
 2. Say when uncertain. Never hallucinate.
-3. Be safety-conscious.
-4. Can create ascii diagrams/maps.
-5. Be direct—no sycophantic phrases.
-6. Keep responses concise.
-7. Use tools sparingly—one search usually suffices.
-8. If you hit the search limit, end your reply with an italicized note: *Your question may be too broad. Try asking something more specific.* Do NOT mention "tools" or "tool limits"—the user doesn't know what those are.
-9. For rescue, accident, or emergency-related queries, use priority_prefixes=['nss/aca'] when searching to prioritize official accident reports."""
+3. Be direct—no sycophantic phrases.
+4. Keep responses concise.
+5. SEARCH EXACTLY ONCE. After searching, IMMEDIATELY answer using those results. NEVER search again - additional searches are blocked and waste resources.
+6. For rescue, accident, or emergency-related queries, use priority_prefixes=['nss/aca'] when searching to prioritize official accident reports."""
 
 SOURCES_ONLY_INSTRUCTIONS = """SOURCES ONLY MODE: Give exactly ONE sentence summary. Then list sources with specific page numbers (e.g., "- The Trog 2021, page 19"). No explanations."""
 
 
-def create_tool_call_limiter(max_calls: int = 3):
-    """Create a process_tool_call callback that limits tool calls."""
-    call_count = [0]  # Mutable container for closure
+def create_search_limiter():
+    """Block searches after the first one."""
+    searched = [False]
 
     async def process_tool_call(
         ctx: RunContext,
         call_tool: CallToolFunc,
         name: str,
-        tool_args: dict[str, Any],
+        tool_args: dict,
     ):
-        call_count[0] += 1
-        if call_count[0] > max_calls:
-            return (
-                f"SEARCH LIMIT REACHED: You have made {max_calls} searches. "
-                "Stop searching and answer now with what you have. "
-                "End your reply with: *Your question may be too broad. Try asking something more specific.*"
-            )
+        if name == "search_caving_documents":
+            if searched[0]:
+                return "You have already searched. Use the results you have."
+            searched[0] = True
         return await call_tool(name, tool_args)
 
     return process_tool_call
@@ -132,7 +125,7 @@ def create_agent(user_roles: list[str] | None = None, sources_only: bool = False
                 url=CAVE_MCP_URL,
                 headers={"x-user-roles": roles_header},
                 timeout=30.0,
-                process_tool_call=create_tool_call_limiter(max_calls=3),
+                process_tool_call=create_search_limiter(),
             )
             toolsets.append(mcp_server)
             logger.info(f"MCP server configured with roles: {user_roles}")
