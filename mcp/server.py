@@ -35,18 +35,12 @@ mcp = FastMCP("Cavepedia MCP")
 def get_user_roles() -> list[str]:
     """Extract user roles from the X-User-Roles header."""
     headers = get_http_headers()
-    print(f"DEBUG: All headers received: {dict(headers)}")
     roles_header = headers.get("x-user-roles", "")
-    print(f"DEBUG: x-user-roles header value: '{roles_header}'")
     if roles_header:
         try:
-            roles = json.loads(roles_header)
-            print(f"DEBUG: Parsed roles: {roles}")
-            return roles
-        except json.JSONDecodeError as e:
-            print(f"DEBUG: JSON decode error: {e}")
+            return json.loads(roles_header)
+        except json.JSONDecodeError:
             return []
-    print("DEBUG: No roles header found, returning empty list")
     return []
 
 def is_sources_only() -> bool:
