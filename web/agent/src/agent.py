@@ -26,7 +26,7 @@ logfire.configure(
 logfire.instrument_pydantic_ai()
 logfire.instrument_httpx()
 
-from pydantic_ai import Agent, ModelMessage, RunContext
+from pydantic_ai import Agent, RunContext
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.mcp import CallToolFunc
 
@@ -34,28 +34,6 @@ CAVE_MCP_URL = os.getenv("CAVE_MCP_URL", "https://mcp.caving.dev/mcp")
 
 logger.info(f"Initializing Cavepedia agent with CAVE_MCP_URL={CAVE_MCP_URL}")
 
-
-def limit_history(ctx: RunContext[None], messages: list[ModelMessage]) -> list[ModelMessage]:
-    """Limit history and clean up orphaned tool calls to prevent API errors."""
-    from pydantic_ai.messages import ModelResponse, ToolCallPart
-
-    if not messages:
-        return messages
-
-    # Keep last 10 messages
-    messages = messages[-10:]
-
-    # Check if the last message is an assistant response with a tool call
-    # If so, remove it - it's orphaned (no tool result followed)
-    if messages:
-        last_msg = messages[-1]
-        if isinstance(last_msg, ModelResponse):
-            has_tool_call = any(isinstance(part, ToolCallPart) for part in last_msg.parts)
-            if has_tool_call:
-                logger.warning("Removing orphaned tool call from history")
-                return messages[:-1]
-
-    return messages
 
 def check_mcp_available(url: str, timeout: float = 5.0) -> bool:
     """Check if MCP server is reachable via health endpoint."""
@@ -148,7 +126,6 @@ def create_agent(user_roles: list[str] | None = None, sources_only: bool = False
         model="anthropic:claude-sonnet-4-5",
         toolsets=toolsets if toolsets else None,
         instructions=instructions,
-        history_processors=[limit_history],
         model_settings=ModelSettings(max_tokens=4096),
     )
 
