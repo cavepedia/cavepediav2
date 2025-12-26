@@ -1,7 +1,7 @@
 """
 Cavepedia Discord Bot - Entry point.
 
-A Discord bot that provides access to the Cavepedia AI assistant.
+A Discord bot that provides access to the Cavepedia AI assistant via /cavesearch command.
 """
 
 import os
@@ -28,6 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 import discord
+from discord import app_commands
 
 from src.config import Config
 from src.agent_client import AgentClient
@@ -38,14 +39,11 @@ class CavepediaBot(discord.Client):
     """Discord bot for Cavepedia AI assistant."""
 
     def __init__(self, config: Config):
-        # Set up intents
         intents = discord.Intents.default()
-        intents.message_content = True  # Required to read message content
-        intents.guilds = True
-
         super().__init__(intents=intents)
 
         self.config = config
+        self.tree = app_commands.CommandTree(self)
         self.agent_client = AgentClient(
             base_url=config.agent_url,
             default_roles=config.default_roles,
@@ -59,6 +57,22 @@ class CavepediaBot(discord.Client):
     async def setup_hook(self):
         """Called when the bot is starting up."""
         await self.agent_client.start()
+
+        # Register the cavesearch command
+        @self.tree.command(name="cavesearch", description="Search the caving knowledge base")
+        @app_commands.describe(query="Your question about caving")
+        async def cavesearch(interaction: discord.Interaction, query: str):
+            await self.handle_search(interaction, query)
+
+        # Sync commands to specific guilds for instant availability
+        for guild_id in [1137321345718439959, 1454125232439955471]:
+            guild = discord.Object(id=guild_id)
+            self.tree.copy_global_to(guild=guild)
+            try:
+                await self.tree.sync(guild=guild)
+                logger.info(f"Commands synced to guild {guild_id}")
+            except discord.errors.Forbidden:
+                logger.warning(f"No access to guild {guild_id}, skipping sync")
         logger.info("Bot setup complete")
 
     async def close(self):
@@ -70,7 +84,6 @@ class CavepediaBot(discord.Client):
         """Called when the bot has connected to Discord."""
         logger.info(f"Logged in as {self.user} (ID: {self.user.id})")
         logger.info(f"Allowed channels: {self.config.allowed_channels}")
-        logger.info(f"Ambient channels: {self.config.ambient_channels}")
 
         # Check agent health
         if await self.agent_client.health_check():
@@ -78,81 +91,49 @@ class CavepediaBot(discord.Client):
         else:
             logger.warning("Agent server health check failed")
 
-    async def on_message(self, message: discord.Message):
-        """Handle incoming messages."""
-        # Ignore messages from the bot itself
-        if message.author == self.user:
-            return
-
-        # Ignore DMs
-        if message.guild is None:
-            return
-
-        channel_id = message.channel.id
-
-        # Check if this is an allowed channel
-        if channel_id not in self.config.allowed_channels:
-            return
-
-        # Determine if we should respond
-        is_ambient = channel_id in self.config.ambient_channels
-        is_mentioned = self.user in message.mentions
-
-        # In ambient channels, respond to all messages
-        # In non-ambient allowed channels, only respond to mentions
-        if not is_ambient and not is_mentioned:
-            return
-
-        # Extract the actual query (remove bot mention if present)
-        query = message.content
-        if is_mentioned:
-            # Remove the mention from the message
-            query = query.replace(f"<@{self.user.id}>", "").strip()
-            query = query.replace(f"<@!{self.user.id}>", "").strip()
-
-        # Skip empty messages
-        if not query:
-            await message.reply(
-                "Please include a question after mentioning me. "
-                "For example: @Cavepedia What is the deepest cave in Virginia?"
+    async def handle_search(self, interaction: discord.Interaction, query: str):
+        """Handle the /cavesearch command."""
+        # Check if channel is allowed
+        if interaction.channel_id not in self.config.allowed_channels:
+            await interaction.response.send_message(
+                "This command is not available in this channel.",
+                ephemeral=True,
             )
             return
 
         # Check rate limits
-        allowed, error_msg = self.rate_limiter.check(message.author.id)
+        allowed, error_msg = self.rate_limiter.check(interaction.user.id)
         if not allowed:
-            await message.reply(error_msg)
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
 
-        # Show typing indicator while processing
-        async with message.channel.typing():
-            try:
-                logger.info(
-                    f"Processing query from {message.author} in #{message.channel.name}: {query[:100]}..."
-                )
+        # Defer response since agent calls take time
+        await interaction.response.defer()
 
-                response = await self.agent_client.query(query)
+        try:
+            logger.info(
+                f"Processing query from {interaction.user} in #{interaction.channel}: {query[:100]}..."
+            )
 
-                # Discord has a 2000 character limit
-                if len(response) > 2000:
-                    # Split into chunks, trying to break at newlines
-                    chunks = self._split_response(response, max_length=1900)
-                    for i, chunk in enumerate(chunks):
-                        if i == 0:
-                            await message.reply(chunk)
-                        else:
-                            await message.channel.send(chunk)
-                else:
-                    await message.reply(response)
+            response = await self.agent_client.query(query)
 
-                logger.info(f"Response sent to {message.author}")
+            # Discord has a 2000 character limit
+            if len(response) > 2000:
+                chunks = self._split_response(response, max_length=1900)
+                await interaction.followup.send(chunks[0])
+                for chunk in chunks[1:]:
+                    await interaction.channel.send(chunk)
+            else:
+                await interaction.followup.send(response)
 
-            except Exception as e:
-                logger.error(f"Error processing query: {e}", exc_info=True)
-                await message.reply(
-                    "Sorry, I encountered an error processing your question. "
-                    "Please try again later."
-                )
+            logger.info(f"Response sent to {interaction.user}")
+
+        except Exception as e:
+            logger.error(f"Error processing query: {e}", exc_info=True)
+            await interaction.followup.send(
+                "Sorry, I encountered an error processing your question. "
+                "Please try again later."
+            )
 
     def _split_response(self, text: str, max_length: int = 1900) -> list[str]:
         """Split a long response into chunks that fit Discord's limit."""
@@ -187,7 +168,7 @@ def main():
     logger.info(f"Default roles: {config.default_roles}")
 
     bot = CavepediaBot(config)
-    bot.run(config.discord_token, log_handler=None)  # We handle logging ourselves
+    bot.run(config.discord_token, log_handler=None)
 
 
 if __name__ == "__main__":
