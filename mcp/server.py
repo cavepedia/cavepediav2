@@ -76,7 +76,7 @@ def search_caving_documents(query: str, priority_prefixes: list[str] | None = No
     top_n = 2
     candidate_limit = top_n * 4
     rows = conn.execute(
-        'SELECT * FROM embeddings WHERE embedding IS NOT NULL AND role = ANY(%s) ORDER BY embedding <=> %s::vector LIMIT %s',
+        'SELECT * FROM embeddings WHERE embedding IS NOT NULL AND LENGTH(content) > 100 AND role = ANY(%s) ORDER BY embedding <=> %s::vector LIMIT %s',
         (roles, query_embedding, candidate_limit)
     ).fetchall()
 
@@ -96,6 +96,7 @@ def search_caving_documents(query: str, priority_prefixes: list[str] | None = No
     sources_only = is_sources_only()
     for result in rerank_resp.results:
         row = rows[result.index]
+        content = row['content'] or ''
         score = result.relevance_score
 
         # Boost score if key starts with any priority prefix (e.g., 'nss/aca')
@@ -107,7 +108,6 @@ def search_caving_documents(query: str, priority_prefixes: list[str] | None = No
         if sources_only:
             docs.append({'key': row['key'], 'relevance': round(score, 3)})
         else:
-            content = row['content'] or ''
             docs.append({'key': row['key'], 'content': content, 'relevance': round(score, 3)})
 
     # Re-sort by boosted score and return top_n
