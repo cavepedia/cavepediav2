@@ -74,7 +74,7 @@ def search_caving_documents(query: str, priority_prefixes: list[str] | None = No
     query_embedding = embed(query, 'search_query')
 
     # Fetch more candidates for reranking
-    top_n = 3
+    top_n = 2
     candidate_limit = top_n * 4
     rows = conn.execute(
         'SELECT * FROM embeddings WHERE embedding IS NOT NULL AND role = ANY(%s) ORDER BY embedding <=> %s::vector LIMIT %s',
