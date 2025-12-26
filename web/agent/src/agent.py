@@ -26,13 +26,32 @@ logfire.configure(
 logfire.instrument_pydantic_ai()
 logfire.instrument_httpx()
 
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent, ModelMessage, RunContext
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.mcp import CallToolFunc
 
 CAVE_MCP_URL = os.getenv("CAVE_MCP_URL", "https://mcp.caving.dev/mcp")
 
 logger.info(f"Initializing Cavepedia agent with CAVE_MCP_URL={CAVE_MCP_URL}")
+
+
+def limit_history(ctx: RunContext[None], messages: list[ModelMessage]) -> list[ModelMessage]:
+    """Keep only the current turn - from last user text message onward."""
+    from pydantic_ai.messages import ModelRequest, UserPromptPart
+
+    if not messages:
+        return messages
+
+    # Find the last user message with actual text (not just tool results)
+    for i in range(len(messages) - 1, -1, -1):
+        msg = messages[i]
+        if isinstance(msg, ModelRequest):
+            has_text = any(isinstance(part, UserPromptPart) for part in msg.parts)
+            if has_text:
+                return messages[i:]
+
+    # Fallback: return all messages if no user text found
+    return messages
 
 
 def check_mcp_available(url: str, timeout: float = 5.0) -> bool:
@@ -126,6 +145,7 @@ def create_agent(user_roles: list[str] | None = None, sources_only: bool = False
         model="anthropic:claude-sonnet-4-5",
         toolsets=toolsets if toolsets else None,
         instructions=instructions,
+        history_processors=[limit_history],
         model_settings=ModelSettings(max_tokens=4096),
     )
 
